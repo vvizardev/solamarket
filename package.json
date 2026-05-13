@@ -1,0 +1,19 @@
+{
+  "name": "polymarket-forking-solana",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build:sdk": "pnpm --filter sdk build",
+    "build:keeper": "pnpm --filter keeper build",
+    "build:app": "pnpm --filter app build",
+    "build:program": "cargo build-sbf --manifest-path program/Cargo.toml",
+    "test:program": "cargo test --manifest-path program/Cargo.toml",
+    "test:keeper": "pnpm --filter keeper test",
+    "keeper:start": "pnpm --filter keeper start",
+    "app:dev": "pnpm --filter app dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["program"]
+
+[workspace.dependencies]
+solana-program = "1.18"
+borsh          = { version = "1", features = ["derive"] }
+thiserror      = "1"
+
+[profile.release]
+overflow-checks = true
+lto             = "thin"
+opt-level       = 3
+
+[profile.dev]
+overflow-checks = true
