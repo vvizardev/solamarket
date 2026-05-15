@@ -40,7 +40,7 @@ Get your environment set up and place your first order in minutes.
 | [Overview](./sdk/overview.md) | SDK packages, installation, and design philosophy |
 | [Quickstart](./sdk/quickstart.md) | Initialize a connection, fetch markets, and submit an order |
 | [Orders](./sdk/orders.md) | Build, place, cancel, and query orders |
-| [Fees](./sdk/fees.md) | Fill fee mechanics and keeper incentives |
+| [Fees](./sdk/fees.md) | Fill fee flow, keeper incentives, Polymarket / Drift comparison, and roadmap |
 | [Outcome Tokens](./sdk/outcome-tokens.md) | Split, merge, and opt-in SPL tokenization |
 | [WebSocket](./sdk/websocket.md) | Real-time order book updates via `OrderSubscriber` |
 
@@ -98,6 +98,7 @@ See [Pinocchio Migration Guide](./program/pinocchio.md) to adopt these improveme
 | Settlement | Polygon Exchange contract | Solana program CPI |
 | Collateral | pUSD (Polygon USDC) | Mock USDC (devnet SPL mint) |
 | Auth | EIP-712 + HMAC | Solana keypair (Ed25519) |
+| Fees | Taker: `0.03–0.07 × feeRate × p×(1−p)`; maker rebates via treasury | Flat 5 bps fill fee → keeper; no maker/taker fees |
 
 ---
 
