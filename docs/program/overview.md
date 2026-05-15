@@ -18,21 +18,21 @@ The tradeoff is more boilerplate: ownership checks, signer checks, and PDA deriv
 
 ---
 
-## Pinocchio — The Next Step
+## Pinocchio
 
-The current program uses the `solana-program` crate. The recommended upgrade path is to migrate to **[Pinocchio](https://github.com/anza-xyz/pinocchio)**, the zero-dependency, `no_std` Solana program framework developed by Anza that powers [p-token](#p-token--cpi-efficiency).
+The program is built on **[Pinocchio](https://github.com/anza-xyz/pinocchio)**, the zero-dependency, `no_std` Solana program framework developed by Anza — the same framework that powers [p-token](#p-token--cpi-efficiency).
 
-| Dimension | `solana-program` (current) | `pinocchio` (recommended) |
-|-----------|---------------------------|--------------------------|
+| Dimension | `solana-program` | `pinocchio` (this program) |
+|-----------|-----------------|---------------------------|
 | `std` dependency | Yes | No (`no_std`) |
 | Zero-copy account data | Partial | Full (pointer-based) |
-| Binary size | ~130+ KB | ~95 KB (p-token reference) |
+| Binary size | ~130+ KB | ~95 KB |
 | CU overhead | Higher | Significantly lower |
 | Heap allocations | Yes | None |
 
-Pinocchio achieves compute savings through zero-copy types — account data is accessed directly via pointers rather than copied into new allocations. This is the same framework used to implement p-token itself.
+Pinocchio achieves compute savings through zero-copy types — account data is accessed directly via pointers rather than copied into new allocations.
 
-Migration guide: [Pinocchio Migration](./pinocchio.md)
+Framework reference: [Pinocchio](./pinocchio.md)
 
 ---
 
@@ -103,30 +103,29 @@ match InstructionData::try_from_slice(instruction_data)? {
 Every handler follows this pattern:
 
 ```rust
-fn process(program_id: &Pubkey, accounts: &[AccountInfo], args: Args) -> ProgramResult {
-    let iter = &mut accounts.iter();
-    let user_ai   = next_account_info(iter)?;
-    let market_ai = next_account_info(iter)?;
-    // ...
+fn process(program_id: &[u8; 32], accounts: &[AccountInfo], args: Args) -> ProgramResult {
+    let [user_ai, market_ai, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     // 1. Signer check
-    if !user_ai.is_signer {
+    if !user_ai.is_signer() {
         return Err(PredictionMarketError::MissingRequiredSigner.into());
     }
 
     // 2. Ownership check
-    if market_ai.owner != program_id {
+    if market_ai.owner() != program_id {
         return Err(PredictionMarketError::InvalidAccountOwner.into());
     }
 
     // 3. PDA derivation check
-    let (expected_pda, _bump) = find_market_pda(&args.question_hash, program_id);
-    if market_ai.key != &expected_pda {
+    let expected_pda = derive_market_pda(&args.question_hash, program_id);
+    if market_ai.key() != &expected_pda {
         return Err(PredictionMarketError::InvalidPda.into());
     }
 
     // 4. Deserialize
-    let market = Market::try_from_slice(&market_ai.data.borrow())?;
+    let market = Market::try_from_slice(&market_ai.try_borrow_data()?)?;
 
     // 5. Business logic checks
     if market.resolved {
@@ -136,7 +135,7 @@ fn process(program_id: &Pubkey, accounts: &[AccountInfo], args: Args) -> Program
     // ... instruction logic ...
 
     // 6. Serialize back
-    market.serialize(&mut &mut market_ai.data.borrow_mut()[..])?;
+    market.serialize(&mut &mut market_ai.try_borrow_mut_data()?[..])?;
     Ok(())
 }
 ```
@@ -204,7 +203,7 @@ All outbound USDC transfers use `invoke_signed` with the `vault_authority` PDA s
 
 ## Next Steps
 
-- [Pinocchio Migration](./pinocchio.md) — upgrade the program to Pinocchio framework
+- [Pinocchio](./pinocchio.md) — framework reference and API patterns
 - [Instructions Reference](./instructions.md)
 - [Account Structs](./accounts.md)
 - [PDA Seeds](./pda-seeds.md)

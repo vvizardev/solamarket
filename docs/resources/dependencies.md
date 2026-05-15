@@ -6,44 +6,12 @@
 
 ## Rust (`program/`)
 
-### Current (solana-program)
+### Current — Pinocchio + p-token
+
+The program uses **Pinocchio**, the `no_std`, zero-allocation framework that powers [p-token](https://solana.com/upgrades/p-token) — Solana's compute-optimized SPL Token replacement, live on devnet since April 2026.
 
 ```toml
 # program/Cargo.toml
-[dependencies]
-solana-program            = "2"
-borsh                     = { version = "1", features = ["derive"] }
-spl-token                 = { version = "4", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "3", features = ["no-entrypoint"] }
-thiserror                 = "1"
-
-[dev-dependencies]
-solana-program-test       = "2"
-solana-sdk                = "2"
-tokio                     = { version = "1", features = ["full"] }
-```
-
-| Crate | Purpose |
-|-------|---------|
-| `solana-program` | Core program SDK: `AccountInfo`, `ProgramResult`, `Pubkey`, `entrypoint!`, `invoke`, `invoke_signed` |
-| `borsh` | Deterministic binary serialization for account data and instruction args |
-| `spl-token` | SPL Token program CPI calls (`transfer`); `no-entrypoint` feature avoids re-exporting its own entrypoint |
-| `spl-associated-token-account` | ATA creation CPI; `no-entrypoint` feature same reason |
-| `thiserror` | `#[derive(Error)]` for `PredictionMarketError` — cleaner than manual `Display` impl |
-| `solana-program-test` | (dev) Lightweight BanksClient test harness — runs program tests without a validator |
-| `solana-sdk` | (dev) `Keypair`, `Transaction`, `Account` types for tests |
-| `tokio` | (dev) Async runtime required by `solana-program-test` |
-
-**Not used:** `anchor-lang`, `anchor-spl`, or any Anchor crate.
-
----
-
-### Recommended Upgrade — Pinocchio + p-token
-
-Migrate the program to **Pinocchio** for maximum CU efficiency. Pinocchio is the `no_std`, zero-allocation framework that powers [p-token](https://solana.com/upgrades/p-token) — Solana's optimized SPL Token replacement, live on devnet since April 2026.
-
-```toml
-# program/Cargo.toml — Pinocchio-based (recommended)
 [dependencies]
 pinocchio                    = "0.7"
 pinocchio-pubkey             = "0.2"
@@ -59,22 +27,27 @@ solana-sdk                   = "2"
 tokio                        = { version = "1", features = ["full"] }
 ```
 
-| Crate | Purpose | Replaces |
-|-------|---------|---------|
-| `pinocchio` | Zero-alloc, `no_std` core: `AccountInfo`, `entrypoint!`, `invoke_signed` | `solana-program` |
-| `pinocchio-pubkey` | `[u8; 32]` pubkey helpers and macros | `solana-program::pubkey` |
-| `pinocchio-token` | p-token / SPL Token CPI instructions (same program address) | `spl-token` |
-| `pinocchio-associated-token` | ATA CPI instructions | `spl-associated-token-account` |
-| `pinocchio-system` | `create_account`, `transfer` lamports CPI | `solana-program::system_instruction` |
-| `borsh` | Account serialization — unchanged | — |
+| Crate | Purpose |
+|-------|---------|
+| `pinocchio` | Zero-alloc, `no_std` core: `AccountInfo`, `entrypoint!`, `invoke_signed` |
+| `pinocchio-pubkey` | `[u8; 32]` pubkey helpers and macros |
+| `pinocchio-token` | p-token / SPL Token CPI instructions (same program address) |
+| `pinocchio-associated-token` | ATA CPI instructions |
+| `pinocchio-system` | `create_account`, `transfer` lamports CPI |
+| `borsh` | Deterministic binary serialization for account data and instruction args |
+| `solana-program-test` | (dev) Lightweight BanksClient test harness — runs program tests without a validator |
+| `solana-sdk` | (dev) `Keypair`, `Transaction`, `Account` types for tests |
+| `tokio` | (dev) Async runtime required by `solana-program-test` |
 
-Benefits:
-- **~95% CU reduction** on all token CPIs (p-token auto-applies on devnet)
+**Not used:** `anchor-lang`, `anchor-spl`, `solana-program` (runtime), `spl-token`, `thiserror`, or any Anchor crate.
+
+Benefits of Pinocchio over `solana-program`:
 - **Zero heap allocations** in the program binary
-- **Smaller binary** (~95 KB vs ~131 KB for spl-token reference)
+- **~95 KB binary** vs ~131 KB for an equivalent `spl-token`-based program
+- **Zero-copy account access** — data read via raw pointer slices, no deserialization copies
 - **`batch` instruction** support for combining multiple token ops in one CPI
 
-Full migration guide: [Pinocchio Migration](../program/pinocchio.md)
+Framework reference: [Pinocchio](../program/pinocchio.md)
 
 ---
 

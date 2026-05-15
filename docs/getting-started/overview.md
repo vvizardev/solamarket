@@ -4,7 +4,7 @@
 
 This project is a reference implementation of a decentralized binary prediction market on **Solana Devnet**. It replaces Polymarket's centralized CLOB (Central Limit Order Book) with a **DLOB (Decentralized Limit Order Book)** architecture modeled after [Drift Protocol v2](https://docs.drift.trade/).
 
-The on-chain program is written as a **native Solana program** — no Anchor framework — using only `solana-program` and `borsh` for serialization.
+The on-chain program is written as a **native Solana program** — no Anchor framework — using **[Pinocchio](https://github.com/anza-xyz/pinocchio)**, the zero-dependency `no_std` Solana framework developed by Anza, and `borsh` for serialization.
 
 ---
 
@@ -32,7 +32,7 @@ Polymarket's production system keeps orders in an off-chain database operated by
 | Instruction discriminator | 8-byte sha256 hash | 1-byte enum index |
 | Binary size | Larger (macro expansion) | Smaller |
 | Compute budget | Higher (macro overhead) | Lower |
-| Dependency surface | `anchor-lang`, `anchor-spl`, proc-macros | `solana-program`, `borsh` only |
+| Dependency surface | `anchor-lang`, `anchor-spl`, proc-macros | `pinocchio`, `borsh` only |
 | IDL | Auto-generated | Hand-written TypeScript types |
 
 The native approach keeps the program binary small, reduces CU consumption per instruction, and eliminates all Anchor toolchain dependencies. Account validation is done explicitly in each instruction handler — more verbose, but easier to audit.
@@ -67,7 +67,7 @@ Key facts:
 
 **Impact on this project:** All USDC vault transfers (`Split`, `Merge`, `Redeem`) and outcome token mints (`TokenizePosition`) automatically use p-token's optimized rates on devnet. A `Transfer` CPI drops from 4,645 CU to just 76 CU — a 98% saving.
 
-The recommended upgrade path is to also rewrite the program itself using the **Pinocchio** framework for similar CU savings in the program's own logic. See [Pinocchio Migration](../program/pinocchio.md).
+The program itself is also written with **Pinocchio**, achieving further CU savings in its own logic through zero-copy account access and zero heap allocations. See [Pinocchio](../program/pinocchio.md).
 
 ---
 

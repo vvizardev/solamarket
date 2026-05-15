@@ -1,6 +1,6 @@
-# Pinocchio Migration Guide
+# Pinocchio
 
-> Upgrade the prediction-market program from `solana-program` to the Pinocchio framework for maximum CU efficiency.
+> The prediction-market program is built on Pinocchio — the zero-dependency, `no_std` Solana framework used by Anza to implement p-token.
 
 ---
 
@@ -10,10 +10,10 @@
 
 The "p" in both p-token and Pinocchio are the same: the framework was purpose-built to demonstrate what native Solana programs can achieve when stripped of all unnecessary allocations.
 
-### Why migrate?
+### Why Pinocchio?
 
-| Dimension | `solana-program` | `pinocchio` |
-|-----------|-----------------|-------------|
+| Dimension | `solana-program` | `pinocchio` (this program) |
+|-----------|-----------------|---------------------------|
 | Heap allocations | Yes (`Box`, `Vec` in internals) | Zero |
 | Zero-copy account data | Partial | Full (raw pointer slices) |
 | `std` dependency | Yes | `no_std` |
@@ -21,24 +21,14 @@ The "p" in both p-token and Pinocchio are the same: the framework was purpose-bu
 | CU per `Pubkey` comparison | Higher | Lower (direct byte comparison) |
 | CU per account deserialization | Higher (alloc + copy) | Lower (zero-copy) |
 
-For a program as compute-intensive as a DEX / order book, migrating to Pinocchio can meaningfully reduce per-instruction CU cost — especially on hot paths like `PlaceOrder` and `FillOrder`.
+For a compute-intensive DEX / order book, Pinocchio meaningfully reduces per-instruction CU cost — especially on hot paths like `PlaceOrder` and `FillOrder`.
 
 ---
 
-## Dependency Changes
+## Dependencies
 
 ```toml
-# program/Cargo.toml — BEFORE
-[dependencies]
-solana-program = "2"
-borsh          = { version = "1", features = ["derive"] }
-spl-token      = { version = "4", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "3", features = ["no-entrypoint"] }
-thiserror      = "1"
-```
-
-```toml
-# program/Cargo.toml — AFTER (Pinocchio)
+# program/Cargo.toml
 [dependencies]
 pinocchio                    = "0.7"
 pinocchio-pubkey             = "0.2"
@@ -50,7 +40,7 @@ borsh                        = { version = "1", features = ["derive"] }
 # No thiserror — pinocchio programs use ProgramError directly
 ```
 
-> **Note:** `solana-program` is still required as a **dev-dependency** for `solana-program-test` in tests.
+> **Note:** `solana-program` is only required as a **dev-dependency** for `solana-program-test` in tests.
 
 ```toml
 [dev-dependencies]
@@ -254,17 +244,17 @@ let market = Market::try_from_slice(&market_ai.try_borrow_data()?)?;
 
 ---
 
-## Migration Checklist
+## What's in Place
 
-- [ ] Replace `solana-program` with `pinocchio`, `pinocchio-pubkey`, `pinocchio-token`, `pinocchio-system`, `pinocchio-associated-token` in `Cargo.toml`
-- [ ] Update `entrypoint.rs` to use `pinocchio::entrypoint`
-- [ ] Update all `AccountInfo` field accesses to method calls (`.is_signer()`, `.owner()`, `.key()`, etc.)
-- [ ] Replace `spl_token::instruction::*` CPI calls with `pinocchio_token::instructions::*`
-- [ ] Replace `system_instruction::create_account` with `pinocchio_system::instructions::CreateAccount`
-- [ ] Replace `spl_associated_token_account::instruction::*` with `pinocchio_associated_token::instructions::*`
-- [ ] Remove `thiserror` from dependencies; use `#[repr(u32)]` enum directly
-- [ ] Add `pinocchio-token::instructions::Batch` for `TokenizePosition` (2 mints → 1 CPI)
-- [ ] Keep `solana-program`, `solana-program-test`, `solana-sdk` in `[dev-dependencies]` for tests
+- [x] `pinocchio`, `pinocchio-pubkey`, `pinocchio-token`, `pinocchio-system`, `pinocchio-associated-token` in `Cargo.toml`
+- [x] `entrypoint.rs` uses `pinocchio::entrypoint`
+- [x] All `AccountInfo` accesses use method calls (`.is_signer()`, `.owner()`, `.key()`, etc.)
+- [x] `spl_token::instruction::*` CPIs replaced with `pinocchio_token::instructions::*`
+- [x] `system_instruction::create_account` replaced with `pinocchio_system::instructions::CreateAccount`
+- [x] `spl_associated_token_account::instruction::*` replaced with `pinocchio_associated_token::instructions::*`
+- [x] `thiserror` removed; errors use `#[repr(u32)]` enum directly
+- [x] `pinocchio-token::instructions::Batch` used in `TokenizePosition` (2 mints → 1 CPI)
+- [x] `solana-program`, `solana-program-test`, `solana-sdk` kept in `[dev-dependencies]` for tests
 
 ---
 
