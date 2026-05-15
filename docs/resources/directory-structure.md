@@ -45,9 +45,10 @@ program/
     ├── lib.rs               ← pub mod declarations
     ├── state/
     │   ├── mod.rs           ← pub use + discriminant constants
-    │   ├── market.rs        ← Market struct (212 bytes)
+    │   ├── market.rs        ← Market struct (244 bytes)
     │   ├── order.rs         ← Order struct (107 bytes)
-    │   └── user_position.rs ← UserPosition struct (1131 bytes)
+    │   ├── user_position.rs ← UserPosition struct (1131 bytes)
+    │   └── event.rs         ← Event struct (589 bytes)
     ├── instructions/
     │   ├── mod.rs
     │   ├── create_market.rs
@@ -58,7 +59,10 @@ program/
     │   ├── fill_order.rs
     │   ├── resolve_market.rs
     │   ├── redeem.rs
-    │   └── tokenize_position.rs
+    │   ├── tokenize_position.rs
+    │   ├── create_event.rs       ← instruction 9
+    │   ├── add_market_to_event.rs ← instruction 10
+    │   └── resolve_event.rs      ← instruction 11
     └── utils/
         ├── mod.rs
         ├── pda.rs           ← seed constants + find_program_address wrappers
@@ -76,10 +80,10 @@ sdk/
 └── src/
     ├── index.ts             ← re-exports everything public
     ├── constants.ts         ← PROGRAM_ID, FILL_FEE_BPS, IX discriminant map
-    ├── types.ts             ← Market, Order, UserPosition interfaces + enums
-    ├── instructions.ts      ← TransactionInstruction builders for all 9 instructions
-    ├── accounts.ts          ← Borsh deserializers + RPC fetchers
-    ├── pda.ts               ← findMarketPda, findOrderPda, findUserPositionPda, etc.
+    ├── types.ts             ← Market, Order, UserPosition, Event interfaces + enums
+    ├── instructions.ts      ← TransactionInstruction builders for all 12 instructions
+    ├── accounts.ts          ← Borsh deserializers + RPC fetchers (incl. fetchEvent)
+    ├── pda.ts               ← findMarketPda, findOrderPda, findUserPositionPda, findEventPda
     ├── dlob/
     │   ├── DLOB.ts          ← In-memory sorted order book (bids + asks)
     │   ├── DLOBNode.ts      ← Wraps Order with remaining / applyFill helpers
@@ -141,7 +145,9 @@ scripts/
 ├── _common.ts               ← shared connection + wallet loading
 ├── create-market.ts         ← CreateMarket instruction script
 ├── fund-wallet.ts           ← mock USDC mint + airdrop script
-└── resolve-market.ts        ← ResolveMarket instruction script
+├── resolve-market.ts        ← ResolveMarket instruction script
+├── create-event.ts          ← CreateEvent + AddMarketToEvent script
+└── resolve-event.ts         ← ResolveEvent instruction script
 ```
 
 ---
@@ -170,6 +176,7 @@ docs/
 │   └── quickstart.md
 ├── core-concepts/
 │   ├── markets.md
+│   ├── events.md
 │   ├── prices-and-orderbook.md
 │   ├── positions-and-tokens.md
 │   ├── collateral.md

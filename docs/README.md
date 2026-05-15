@@ -32,6 +32,7 @@ Get your environment set up and place your first order in minutes.
 | [Collateral (mock USDC)](./core-concepts/collateral.md) | Devnet USDC, vault model, and rent economics |
 | [Order Lifecycle](./core-concepts/order-lifecycle.md) | Place → fill → cancel → redeem end-to-end |
 | [Resolution](./core-concepts/resolution.md) | Admin resolution, winning outcome, and payout |
+| [Negative Risk Markets](./core-concepts/negative-risk.md) | Complete sets, negative-risk positions, and cross-market collateral conversion |
 
 ### SDK
 

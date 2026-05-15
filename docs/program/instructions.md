@@ -251,8 +251,94 @@ Converts internal YES/NO balances to real SPL tokens.
 
 ---
 
+## 9 — CreateEvent
+
+**Caller:** Admin only.
+
+Creates an Event PDA that groups multiple markets under a shared label, end time, and exclusivity mode.
+
+**Arguments:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `event_id` | `[u8; 32]` | SHA-256 hash of the event label string |
+| `end_time` | `i64` | Unix timestamp; should match the `end_time` of all child markets |
+| `is_exclusive` | `bool` | If `true`, `ResolveEvent` will force all non-winning markets to NO |
+
+**Accounts:**
+
+| # | Access | Account |
+|---|--------|---------|
+| 0 | writable, signer | admin |
+| 1 | writable | event PDA `[b"event", event_id]` |
+| 2 | — | system_program |
+
+**Constraints:** Signer becomes `event.admin`. The event PDA must not already exist.
+
+---
+
+## 10 — AddMarketToEvent
+
+**Caller:** Admin only (must be both `event.admin` and `market.admin`).
+
+Links an existing market to an event. Sets `market.event = event_pubkey` and appends the market pubkey into `event.markets[market_count]`, then increments `market_count`.
+
+**Arguments:** None — accounts identify the market and event.
+
+**Accounts:**
+
+| # | Access | Account |
+|---|--------|---------|
+| 0 | signer | admin |
+| 1 | writable | event PDA |
+| 2 | writable | market PDA |
+
+**Constraints:**
+- `admin.key == event.admin` (returns `NotEventAdmin` otherwise).
+- `market.admin == event.admin` (returns `EventAdminMismatch` otherwise).
+- `market.event == Pubkey::default()` — market must not already be in an event (returns `MarketAlreadyInEvent`).
+- `event.market_count < 16` (returns `EventFull`).
+- `!event.resolved` (returns `EventAlreadyResolved`).
+
+---
+
+## 11 — ResolveEvent
+
+**Caller:** Admin only (`event.admin`).
+
+Resolves an exclusive multi-market event atomically in a single transaction. Sets the market at `winning_index` to YES, and all other markets in the event to NO. Also sets `event.resolved = true`.
+
+For **non-exclusive** events (`is_exclusive = false`), this instruction is not needed — resolve each market individually with `ResolveMarket` (instruction 6).
+
+**Arguments:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `winning_index` | `u8` | Index into `event.markets[]` for the YES outcome |
+
+**Accounts:**
+
+| # | Access | Account |
+|---|--------|---------|
+| 0 | signer | admin |
+| 1 | writable | event PDA |
+| 2..N | writable | all `event.market_count` market PDAs, in the same order as `event.markets[]` |
+
+The number of market accounts passed must equal `event.market_count`. The program iterates all provided market accounts, resolves `markets[winning_index]` as YES, and the rest as NO.
+
+**Constraints:**
+- `admin.key == event.admin` (returns `NotEventAdmin`).
+- `!event.resolved` (returns `EventAlreadyResolved`).
+- `event.is_exclusive == true` (non-exclusive events must use per-market `ResolveMarket`).
+- `winning_index < event.market_count` (returns `InvalidMarketIndex`).
+- Each provided market PDA must match `event.markets[i]` (returns `EventMarketMismatch`).
+- No market in the event may already be resolved (returns `MarketAlreadyResolved`).
+
+---
+
 ## Next Steps
 
 - [Account Structs](./accounts.md)
 - [PDA Seeds](./pda-seeds.md)
 - [Error Codes](../resources/error-codes.md)
+- [Events](../core-concepts/events.md)

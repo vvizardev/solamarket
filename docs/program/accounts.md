@@ -13,10 +13,11 @@ Each account type has a fixed 1-byte discriminant at offset 0, used to filter ac
 | `Market` | `0` |
 | `Order` | `1` |
 | `UserPosition` | `2` |
+| `Event` | `3` |
 
 ---
 
-## Market (212 bytes)
+## Market (244 bytes)
 
 ```rust
 pub struct Market {
@@ -31,10 +32,13 @@ pub struct Market {
     pub winning_outcome:  u8,       // offset 170
     pub admin:            Pubkey,   // offset 171
     pub order_count:      u64,      // offset 203
-    pub bump:             u8,       // offset 211
+    pub event:            Pubkey,   // offset 211  Pubkey::default() = standalone market
+    pub bump:             u8,       // offset 243
 }
-// Total: 212 bytes
+// Total: 244 bytes
 ```
+
+`event` is `Pubkey::default()` (all zeros) for standalone markets. When a market belongs to a multi-market event, this field is set to the event's PDA pubkey via `AddMarketToEvent`. This allows a single `getProgramAccounts` memcmp filter at offset 211 to retrieve all markets in an event without loading the Event account first.
 
 TypeScript equivalent:
 
@@ -51,6 +55,7 @@ interface Market {
   winningOutcome:  number;       // 0=unresolved, 1=YES, 2=NO
   admin:           PublicKey;
   orderCount:      bigint;
+  event:           PublicKey;    // Pubkey.default() = standalone
   bump:            number;
 }
 ```
@@ -165,9 +170,59 @@ console.log("Open orders:", position.openOrderCount);
 
 ---
 
+## Event (589 bytes)
+
+```rust
+pub struct Event {
+    pub discriminant:  u8,            // offset 0    = 3
+    pub event_id:      [u8; 32],      // offset 1    SHA-256(event label string)
+    pub admin:         Pubkey,        // offset 33
+    pub end_time:      i64,           // offset 65   shared end time for all child markets
+    pub is_exclusive:  bool,          // offset 73   if true → ResolveEvent forces non-winners to NO
+    pub resolved:      bool,          // offset 74
+    pub market_count:  u8,            // offset 75   filled slots (max 16)
+    pub markets:       [Pubkey; 16],  // offset 76   16 × 32 = 512 bytes
+    pub bump:          u8,            // offset 588
+}
+// Total: 589 bytes
+```
+
+`markets` slots beyond `market_count` contain `Pubkey::default()` and are ignored. The fixed 16-slot array keeps the account size constant at 589 bytes regardless of how many markets have been attached.
+
+TypeScript equivalent:
+
+```typescript
+interface Event {
+  discriminant:  number;
+  eventId:       Uint8Array;   // 32 bytes
+  admin:         PublicKey;
+  endTime:       bigint;       // i64 (little-endian)
+  isExclusive:   boolean;
+  resolved:      boolean;
+  marketCount:   number;
+  markets:       PublicKey[];  // sliced to marketCount; rest are Pubkey.default()
+  bump:          number;
+}
+```
+
+Fetch:
+
+```typescript
+import { fetchEvent, findEventPda } from "@polymarket-sol/sdk";
+import { createHash } from "crypto";
+
+const eventId = new Uint8Array(createHash("sha256").update("2024 US Presidential Election").digest());
+const [eventPda] = findEventPda(eventId, PROGRAM_ID);
+const event = await fetchEvent(connection, eventPda);
+
+console.log("Markets:", event.markets.slice(0, event.marketCount).map(p => p.toBase58()));
+```
+
+---
+
 ## getProgramAccounts Filters
 
-To fetch all accounts of a given type for a specific market:
+To fetch all accounts of a given type for a specific market or event:
 
 ```typescript
 // All Order accounts for a market
@@ -183,6 +238,21 @@ const positions = await connection.getProgramAccounts(PROGRAM_ID, {
   filters: [
     { memcmp: { offset: 0, bytes: Buffer.from([2]).toString("base64") } }, // UserPosition discriminant
     { memcmp: { offset: 1, bytes: marketPda.toBase58() } },
+  ],
+});
+
+// All Market accounts belonging to a specific event (uses Market.event at offset 211)
+const eventMarkets = await connection.getProgramAccounts(PROGRAM_ID, {
+  filters: [
+    { memcmp: { offset: 0,   bytes: Buffer.from([0]).toString("base64") } }, // Market discriminant
+    { memcmp: { offset: 211, bytes: eventPda.toBase58() } },                 // event field
+  ],
+});
+
+// All Event accounts (to list all events)
+const allEvents = await connection.getProgramAccounts(PROGRAM_ID, {
+  filters: [
+    { memcmp: { offset: 0, bytes: Buffer.from([3]).toString("base64") } }, // Event discriminant
   ],
 });
 ```

@@ -27,11 +27,14 @@ pub struct Market {
     pub winning_outcome:  u8,       // 0=unresolved, 1=YES, 2=NO
     pub admin:            Pubkey,   // only key that can call ResolveMarket
     pub order_count:      u64,
+    pub event:            Pubkey,   // Pubkey::default() = standalone; set by AddMarketToEvent
     pub bump:             u8,
 }
 ```
 
-Total size: **212 bytes** (fixed, rent-exempt).
+Total size: **244 bytes** (fixed, rent-exempt).
+
+The `event` field at offset 211 is `Pubkey::default()` for standalone markets. When a market belongs to a multi-market event, it is set to the Event PDA pubkey via the `AddMarketToEvent` instruction. This allows efficient off-chain querying of all markets in an event using a single `getProgramAccounts` memcmp filter.
 
 ---
 
@@ -121,6 +124,7 @@ See [Collateral](./collateral.md) for the full vault and rent model.
 
 ## Next Steps
 
+- [Events — Multi-Market Grouping](./events.md)
 - [Prices & Order Book](./prices-and-orderbook.md)
 - [Order Lifecycle](./order-lifecycle.md)
 - [Instructions — CreateMarket](../program/instructions.md#createmarket)

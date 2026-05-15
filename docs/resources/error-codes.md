@@ -64,6 +64,21 @@ Program log: Error: custom program error: 0x14
 
 ---
 
+## Event Errors (40–49)
+
+| Code | Hex | Name | Description |
+|------|-----|------|-------------|
+| 40 | 0x28 | `EventFull` | Event already has 16 markets; no more can be added. |
+| 41 | 0x29 | `MarketAlreadyInEvent` | `AddMarketToEvent` called on a market whose `event` field is already set. |
+| 42 | 0x2A | `EventAlreadyResolved` | `ResolveEvent` or `AddMarketToEvent` called on an already-resolved event. |
+| 43 | 0x2B | `NotEventAdmin` | Signer is not `event.admin`; only the admin can modify or resolve an event. |
+| 44 | 0x2C | `EventAdminMismatch` | `market.admin` does not equal `event.admin`; markets and events must share the same admin. |
+| 45 | 0x2D | `InvalidMarketIndex` | `winning_index` passed to `ResolveEvent` is ≥ `event.market_count`. |
+| 46 | 0x2E | `EventMarketMismatch` | A market account passed to `ResolveEvent` does not match the corresponding `event.markets[i]` pubkey. |
+| 47 | 0x2F | `NotExclusiveEvent` | `ResolveEvent` called on an event where `is_exclusive = false`; use per-market `ResolveMarket` instead. |
+
+---
+
 ## Handling Errors in TypeScript
 
 ```typescript
@@ -114,5 +129,14 @@ pub enum PredictionMarketError {
     Overflow               = 31,
     ZeroAmount             = 32,
     OpenOrdersFull         = 33,
+
+    EventFull              = 40,
+    MarketAlreadyInEvent   = 41,
+    EventAlreadyResolved   = 42,
+    NotEventAdmin          = 43,
+    EventAdminMismatch     = 44,
+    InvalidMarketIndex     = 45,
+    EventMarketMismatch    = 46,
+    NotExclusiveEvent      = 47,
 }
 ```

@@ -108,9 +108,10 @@ fn process_place_order(program_id: &Pubkey, accounts: &[AccountInfo], args: Plac
 ```
 
 **State accounts:**
-- `Market` — one per question. Holds vault, resolution state, admin.
+- `Market` — one per question. Holds vault, resolution state, admin, and optional event link.
 - `Order` — one per open order. Stores side, price, size, fill amount.
 - `UserPosition` — one per (user, market). Tracks internal balances and open order list.
+- `Event` — one per grouped event. Links up to 16 markets for shared end time, admin, and atomic exclusive resolution.
 
 **Instructions (dispatched via 1-byte discriminant):**
 
@@ -125,6 +126,9 @@ fn process_place_order(program_id: &Pubkey, accounts: &[AccountInfo], args: Plac
 | 6 | `ResolveMarket` | admin | set `resolved = true`, `winning_outcome` |
 | 7 | `Redeem` | user | debit winning balance; transfer USDC from vault |
 | 8 | `TokenizePosition` | user (opt-in) | mint real SPL YES/NO tokens (user pays ATA cost) |
+| 9 | `CreateEvent` | admin | create Event PDA with label hash, end time, exclusivity flag |
+| 10 | `AddMarketToEvent` | admin | link a market to an event; sets `market.event`; appends to `event.markets[]` |
+| 11 | `ResolveEvent` | admin | atomic exclusive resolution: one market → YES, all others → NO |
 
 #### 2. DLOB Keeper (`keeper/`)
 
@@ -219,7 +223,22 @@ pub struct Market {
     pub winning_outcome:  u8,         // 0 = unresolved, 1 = YES, 2 = NO
     pub admin:            Pubkey,
     pub order_count:      u64,
+    pub event:            Pubkey,     // Pubkey::default() = standalone; set by AddMarketToEvent
     pub bump:             u8,
+}
+
+// state/event.rs
+#[derive(BorshSerialize, BorshDeserialize)]
+pub struct Event {
+    pub discriminant:  u8,            // = 3
+    pub event_id:      [u8; 32],      // SHA-256(event label string)
+    pub admin:         Pubkey,
+    pub end_time:      i64,           // shared end time for all child markets
+    pub is_exclusive:  bool,          // if true → ResolveEvent forces non-winners to NO
+    pub resolved:      bool,
+    pub market_count:  u8,            // filled slots (max 16)
+    pub markets:       [Pubkey; 16],  // 16 × 32 = 512 bytes
+    pub bump:          u8,
 }
 
 // state/order.rs
@@ -299,6 +318,7 @@ User sees updated UserPosition balances
 | Market vault authority | `[b"vault_authority", market_pubkey]` |
 | Order | `[b"order", market_pubkey, user_pubkey, nonce_le_bytes]` |
 | UserPosition | `[b"user_position", market_pubkey, user_pubkey]` |
+| Event | `[b"event", event_id]` |
 
 ---
 
@@ -435,15 +455,18 @@ tokio = { version = "1", features = ["full"] }
 // instruction.rs
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum InstructionData {
-    CreateMarket(CreateMarketArgs),   // 0
-    Split(u64),                       // 1
-    Merge(u64),                       // 2
-    PlaceOrder(PlaceOrderArgs),       // 3
-    CancelOrder(CancelOrderArgs),     // 4
-    FillOrder(FillOrderArgs),         // 5
-    ResolveMarket(u8),                // 6  outcome: 1=YES, 2=NO
-    Redeem(u64),                      // 7
-    TokenizePosition(u64),            // 8
+    CreateMarket(CreateMarketArgs),      // 0
+    Split(u64),                          // 1
+    Merge(u64),                          // 2
+    PlaceOrder(PlaceOrderArgs),          // 3
+    CancelOrder(CancelOrderArgs),        // 4
+    FillOrder(FillOrderArgs),            // 5
+    ResolveMarket(u8),                   // 6  outcome: 1=YES, 2=NO
+    Redeem(u64),                         // 7
+    TokenizePosition(u64),               // 8
+    CreateEvent(CreateEventArgs),        // 9
+    AddMarketToEvent,                    // 10 (no args; accounts carry context)
+    ResolveEvent(ResolveEventArgs),      // 11 winning_index: u8
 }
 ```
 

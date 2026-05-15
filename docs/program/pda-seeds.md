@@ -12,6 +12,7 @@
 | Market vault authority | `[b"vault_authority", market_pubkey: [u8;32]]` |
 | Order | `[b"order", market_pubkey: [u8;32], user_pubkey: [u8;32], nonce: [u8;8] (little-endian u64)]` |
 | UserPosition | `[b"user_position", market_pubkey: [u8;32], user_pubkey: [u8;32]]` |
+| Event | `[b"event", event_id: [u8;32]]` |
 
 ---
 
@@ -24,6 +25,7 @@ pub const SEED_MARKET:          &[u8] = b"market";
 pub const SEED_VAULT_AUTHORITY: &[u8] = b"vault_authority";
 pub const SEED_ORDER:           &[u8] = b"order";
 pub const SEED_USER_POSITION:   &[u8] = b"user_position";
+pub const SEED_EVENT:           &[u8] = b"event";
 
 pub fn find_market_pda(question_hash: &[u8; 32], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[SEED_MARKET, question_hash], program_id)
@@ -50,6 +52,10 @@ pub fn find_user_position_pda(
         program_id,
     )
 }
+
+pub fn find_event_pda(event_id: &[u8; 32], program_id: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[SEED_EVENT, event_id], program_id)
+}
 ```
 
 ---
@@ -63,6 +69,7 @@ const SEED_MARKET          = Buffer.from("market");
 const SEED_VAULT_AUTHORITY = Buffer.from("vault_authority");
 const SEED_ORDER           = Buffer.from("order");
 const SEED_USER_POSITION   = Buffer.from("user_position");
+const SEED_EVENT           = Buffer.from("event");
 
 export function findMarketPda(
   questionHash: Uint8Array,
@@ -105,6 +112,13 @@ export function findUserPositionPda(
     programId,
   );
 }
+
+export function findEventPda(
+  eventId:   Uint8Array,
+  programId = PROGRAM_ID,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([SEED_EVENT, eventId], programId);
+}
 ```
 
 ---
@@ -141,7 +155,7 @@ Any client that knows the program ID, market question, and user pubkey can deriv
 ```typescript
 import { createHash } from "crypto";
 import {
-  findMarketPda, findOrderPda, findUserPositionPda, findVaultAuthorityPda
+  findMarketPda, findOrderPda, findUserPositionPda, findVaultAuthorityPda, findEventPda
 } from "@polymarket-sol/sdk";
 
 const question = "Will BTC be above $100k by end of 2025?";
@@ -151,6 +165,11 @@ const [marketPda]   = findMarketPda(hash, PROGRAM_ID);
 const [vaultAuth]   = findVaultAuthorityPda(marketPda, PROGRAM_ID);
 const [posPda]      = findUserPositionPda(marketPda, userPubkey, PROGRAM_ID);
 const [orderPda]    = findOrderPda(marketPda, userPubkey, 1n, PROGRAM_ID);
+
+// For a multi-market event
+const eventLabel = "2024 US Presidential Election";
+const eventId    = new Uint8Array(createHash("sha256").update(eventLabel).digest());
+const [eventPda] = findEventPda(eventId, PROGRAM_ID);
 ```
 
 ---
