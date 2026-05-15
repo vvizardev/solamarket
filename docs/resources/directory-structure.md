@@ -45,10 +45,10 @@ program/
     ├── lib.rs               ← pub mod declarations
     ├── state/
     │   ├── mod.rs           ← pub use + discriminant constants
-    │   ├── market.rs        ← Market struct (292 bytes)
+    │   ├── market.rs        ← Market struct (295 bytes)
     │   ├── order.rs         ← Order struct (107 bytes)
     │   ├── user_position.rs ← UserPosition struct (1131 bytes)
-    │   └── event.rs         ← Event struct (589 bytes)
+    │   └── event.rs         ← Event struct (592 bytes)
     ├── instructions/
     │   ├── mod.rs
     │   ├── create_market.rs

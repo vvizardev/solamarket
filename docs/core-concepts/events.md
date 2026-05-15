@@ -17,9 +17,15 @@ Single-market events use the existing `CreateMarket` instruction directly — no
 
 ---
 
+## Categories
+
+Group-level taxonomy lives on **`Event`** (`primary_category`, `subcategory`). Child **`Market`** accounts should normally duplicate the same ids so clients can filter markets without loading the event account; see [Market Categories](./categories.md).
+
+---
+
 ## Event Account
 
-Discriminant `3`. PDA seeds: `[b"event", event_id: [u8; 32]]`.
+Discriminant `3`. PDA seeds: `[b"event", event_id: [u8; 32]]`. Canonical layout: [Program — Accounts](../program/accounts.md#event-account).
 
 ```rust
 // state/event.rs
@@ -33,9 +39,11 @@ pub struct Event {
     pub resolved:      bool,          // offset 74
     pub market_count:  u8,            // offset 75   number of slots currently filled (max 16)
     pub markets:       [Pubkey; 16],  // offset 76   16 × 32 = 512 bytes
-    pub bump:          u8,            // offset 588
+    pub primary_category: u8,         // offset 588  0 = uncategorized
+    pub subcategory:      u16,        // offset 589  meaning depends on primary_category
+    pub bump:               u8,       // offset 591
 }
-// Total: 589 bytes
+// Total: 592 bytes
 ```
 
 TypeScript equivalent:
@@ -50,6 +58,8 @@ interface Event {
   resolved:      boolean;
   marketCount:   number;
   markets:       PublicKey[];  // sliced to marketCount
+  primaryCategory: number;
+  subcategory:     number;
   bump:          number;
 }
 ```
@@ -66,7 +76,9 @@ The `Market` struct has an `event` field (offset 211, 32 bytes). It is `Pubkey::
 pub struct Market {
     // ... existing fields ...
     pub event: Pubkey,  // Pubkey::default() = standalone; otherwise = event PDA
-    pub bump:  u8,
+    pub primary_category: u8,
+    pub subcategory:      u16,
+    pub bump:             u8,
 }
 ```
 
@@ -97,6 +109,8 @@ const ix = createEvent({
 });
 ```
 
+Wire **`primary_category`** and **`subcategory`** in the `CreateEvent` instruction arguments when the program/SDK exposes them ([Instructions — CreateEvent](../program/instructions.md#9---createevent), [Market Categories](./categories.md)).
+
 ### Step 2 — Create each Market
 
 Each market is created independently with `CreateMarket`. The `end_time` passed to each market should match the event's `end_time`.
@@ -117,6 +131,8 @@ const marketPdas = questions.map((q) => {
   return { hash, pda };
 });
 ```
+
+Each **`CreateMarket`** call should use **matching** `primary_category` / `subcategory` values so memcmp filters work on `Market` accounts ([Market Categories](./categories.md)).
 
 ### Step 3 — Attach Markets to Event
 
@@ -238,7 +254,8 @@ const eventAccounts = await connection.getProgramAccounts(PROGRAM_ID, {
 
 ## Next Steps
 
-- [Instructions — CreateEvent / AddMarketToEvent / ResolveEvent](../program/instructions.md#9--createevent)
-- [Account Structs — Event](../program/accounts.md#event-589-bytes)
+- [Market Categories](./categories.md)
+- [Instructions — CreateEvent / AddMarketToEvent / ResolveEvent](../program/instructions.md#9---createevent)
+- [Account Structs — Event](../program/accounts.md#event-account)
 - [PDA Seeds — Event](../program/pda-seeds.md)
 - [Resolution](./resolution.md)

@@ -40,8 +40,10 @@ Creates the Market PDA and initializes the USDC vault ATA.
 | `maker_fee_bps` | `u16` | Optional maker fee on `fill_cost` |
 | `maker_rebate_of_taker_bps` | `u16` | Share of `taker_fee` paid to maker |
 | `keeper_reward_of_taker_bps` | `u16` | Share of `taker_fee` paid to keeper |
+| `primary_category` | `u8` | Browse taxonomy — `0` = uncategorized; registry in [Categories](../core-concepts/categories.md) |
+| `subcategory` | `u16` | Drill-down id; meaning depends on `primary_category` |
 
-Exact Borsh packing can mirror the tail fields of [Market](./accounts.md#market-292-bytes); if `CreateMarket` stays minimal in an early build, the program can initialize these from sane defaults and add an `UpdateMarketFees` instruction later.
+Exact Borsh packing can mirror the tail fields of [Market](./accounts.md#market-account); if `CreateMarket` stays minimal in an early build, the program can initialize these from sane defaults and add an `UpdateMarketFees` instruction later.
 
 **Accounts:**
 
@@ -276,6 +278,8 @@ Creates an Event PDA that groups multiple markets under a shared label, end time
 | `event_id` | `[u8; 32]` | SHA-256 hash of the event label string |
 | `end_time` | `i64` | Unix timestamp; should match the `end_time` of all child markets |
 | `is_exclusive` | `bool` | If `true`, `ResolveEvent` will force all non-winning markets to NO |
+| `primary_category` | `u8` | Same registry as `Market` — `0` = uncategorized ([Categories](../core-concepts/categories.md)) |
+| `subcategory` | `u16` | Group drill-down; child markets should normally duplicate for memcmp |
 
 **Accounts:**
 
@@ -311,6 +315,7 @@ Links an existing market to an event. Sets `market.event = event_pubkey` and app
 - `market.event == Pubkey::default()` — market must not already be in an event (returns `MarketAlreadyInEvent`).
 - `event.market_count < 16` (returns `EventFull`).
 - `!event.resolved` (returns `EventAlreadyResolved`).
+- **Convention:** `market.primary_category` / `market.subcategory` SHOULD match the parent event so category memcmp works on standalone market scans ([Categories](../core-concepts/categories.md)); optional strict equality checks are program-policy dependent.
 
 ---
 

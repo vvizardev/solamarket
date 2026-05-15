@@ -1,6 +1,6 @@
 # Account Structs
 
-> Borsh layout for Market, Order, and UserPosition — byte-exact reference for both Rust and TypeScript.
+> Borsh layout for `Market`, `Event`, `Order`, and `UserPosition` — byte-exact reference for both Rust and TypeScript.
 
 ---
 
@@ -17,9 +17,9 @@ Each account type has a fixed 1-byte discriminant at offset 0, used to filter ac
 
 ---
 
-## Market (292 bytes) {#market-292-bytes}
+## Market (295 bytes) {#market-account}
 
-Fee fields support Polymarket-style **taker curve**, **maker fee**, **maker rebate**, and **treasury** routing. See [SDK — Fees](../sdk/fees.md).
+Fee fields support Polymarket-style **taker curve**, **maker fee**, **maker rebate**, and **treasury** routing. See [SDK — Fees](../sdk/fees.md). **Category** fields support browse/filter UX and optional fee policy; see [Core Concepts — Categories](../core-concepts/categories.md).
 
 ```rust
 pub struct Market {
@@ -45,9 +45,11 @@ pub struct Market {
     pub _fee_padding:                u16,    // offset 257  reserved / alignment
     pub fee_recipient_user:          Pubkey, // offset 259  treasury owner; default → keeper absorbs treasury_share
 
-    pub bump:                        u8,     // offset 291
+    pub primary_category:            u8,     // offset 291  0 = uncategorized
+    pub subcategory:                 u16,    // offset 292  meaning depends on primary_category
+    pub bump:                        u8,     // offset 294
 }
-// Total: 292 bytes
+// Total: 295 bytes
 ```
 
 `event` is `Pubkey::default()` (all zeros) for standalone markets. When a market belongs to a multi-market event, this field is set to the event's PDA pubkey via `AddMarketToEvent`. This allows a single `getProgramAccounts` memcmp filter at offset 211 to retrieve all markets in an event without loading the Event account first.
@@ -77,6 +79,8 @@ interface Market {
   feePadding:               number;    // u16 reserved
   feeRecipientUser:         PublicKey; // treasury; default pubkey → merge treasury into keeper
 
+  primaryCategory: number; // u8 — 0 = uncategorized
+  subcategory:     number; // u16 LE — interpretation depends on primaryCategory
   bump:            number;
 }
 ```
@@ -195,7 +199,9 @@ console.log("Open orders:", position.openOrderCount);
 
 ---
 
-## Event (589 bytes)
+## Event (592 bytes) {#event-account}
+
+Same **category** encoding as `Market` ([Categories](../core-concepts/categories.md)): event-level taxonomy for grouped markets; child markets normally duplicate these ids for memcmp-only discovery.
 
 ```rust
 pub struct Event {
@@ -207,12 +213,14 @@ pub struct Event {
     pub resolved:      bool,          // offset 74
     pub market_count:  u8,            // offset 75   filled slots (max 16)
     pub markets:       [Pubkey; 16],  // offset 76   16 × 32 = 512 bytes
-    pub bump:          u8,            // offset 588
+    pub primary_category: u8,        // offset 588  0 = uncategorized
+    pub subcategory:      u16,        // offset 589  meaning depends on primary_category
+    pub bump:             u8,         // offset 591
 }
-// Total: 589 bytes
+// Total: 592 bytes
 ```
 
-`markets` slots beyond `market_count` contain `Pubkey::default()` and are ignored. The fixed 16-slot array keeps the account size constant at 589 bytes regardless of how many markets have been attached.
+`markets` slots beyond `market_count` contain `Pubkey::default()` and are ignored. The fixed 16-slot array keeps the account size constant regardless of how many markets have been attached.
 
 TypeScript equivalent:
 
@@ -226,7 +234,9 @@ interface Event {
   resolved:      boolean;
   marketCount:   number;
   markets:       PublicKey[];  // sliced to marketCount; rest are Pubkey.default()
-  bump:          number;
+  primaryCategory: number; // u8 — 0 = uncategorized
+  subcategory:     number; // u16 LE
+  bump:            number;
 }
 ```
 
@@ -245,7 +255,7 @@ console.log("Markets:", event.markets.slice(0, event.marketCount).map(p => p.toB
 
 ---
 
-## getProgramAccounts Filters
+## getProgramAccounts Filters {#getprogramaccounts-filters}
 
 To fetch all accounts of a given type for a specific market or event:
 
@@ -280,11 +290,28 @@ const allEvents = await connection.getProgramAccounts(PROGRAM_ID, {
     { memcmp: { offset: 0, bytes: Buffer.from([3]).toString("base64") } }, // Event discriminant
   ],
 });
+
+// Markets in primary_category = Crypto (id 3) — byte at offset 291
+const cryptoMarkets = await connection.getProgramAccounts(PROGRAM_ID, {
+  filters: [
+    { memcmp: { offset: 0, bytes: Buffer.from([0]).toString("base64") } }, // Market discriminant
+    { memcmp: { offset: 291, bytes: Buffer.from([3]).toString("base64") } },
+  ],
+});
+
+// Events in primary_category = Weather (id 4) — byte at offset 588
+const weatherEvents = await connection.getProgramAccounts(PROGRAM_ID, {
+  filters: [
+    { memcmp: { offset: 0, bytes: Buffer.from([3]).toString("base64") } }, // Event discriminant
+    { memcmp: { offset: 588, bytes: Buffer.from([4]).toString("base64") } },
+  ],
+});
 ```
 
 ---
 
 ## Next Steps
 
+- [Core Concepts — Categories](../core-concepts/categories.md)
 - [PDA Seeds](./pda-seeds.md)
 - [Instructions Reference](./instructions.md)

@@ -27,6 +27,7 @@ Get your environment set up and place your first order in minutes.
 | Page | Description |
 |------|-------------|
 | [Markets](./core-concepts/markets.md) | Binary markets, question hashes, lifecycle states |
+| [Market Categories](./core-concepts/categories.md) | On-chain `primary_category` / `subcategory` taxonomy (Polymarket-style browse filters) |
 | [Prices & Order Book](./core-concepts/prices-and-orderbook.md) | Price representation, DLOB structure, spread, and crossing |
 | [Positions & Tokens](./core-concepts/positions-and-tokens.md) | Internal balances, YES/NO tokens, and optional SPL tokenization |
 | [Collateral (mock USDC)](./core-concepts/collateral.md) | Devnet USDC, vault model, and rent economics |
@@ -61,7 +62,7 @@ Get your environment set up and place your first order in minutes.
 | [Overview](./program/overview.md) | Native Solana program design, p-token CPI savings, and security model |
 | [Pinocchio Migration](./program/pinocchio.md) | Upgrade from `solana-program` to Pinocchio for ~95% CU reduction |
 | [Instructions](./program/instructions.md) | All 9 instructions with accounts, args, and constraints |
-| [Account Structs](./program/accounts.md) | Borsh layout for Market, Order, and UserPosition |
+| [Account Structs](./program/accounts.md) | Borsh layout for `Market`, `Event`, `Order`, and `UserPosition` |
 | [PDA Seeds](./program/pda-seeds.md) | Seed derivation for all program-owned accounts |
 
 ### Resources

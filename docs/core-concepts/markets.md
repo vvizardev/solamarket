@@ -12,9 +12,15 @@ Every market is stored in a single `Market` PDA on-chain. There is one market pe
 
 ---
 
+## Categories
+
+Each market stores **`primary_category`** (`u8`) and **`subcategory`** (`u16`) for Polymarket-style browse filters (Politics, Crypto time horizons, Weather phenomena, etc.). Values `0` mean uncategorized / no sub-bucket. Full registry and memcmp offsets: [Market Categories](./categories.md).
+
+---
+
 ## Market Account Fields
 
-The canonical `Market` layout (including **Polymarket-style fee** fields) is defined in [Program — Accounts](../program/accounts.md#market-292-bytes). Total size: **292 bytes** (fixed, rent-exempt).
+The canonical `Market` layout (including **Polymarket-style fee** fields and **category** ids) is defined in [Program — Accounts](../program/accounts.md#market-account). Total size: **295 bytes** (fixed, rent-exempt).
 
 ```rust
 // Summary — see accounts.md for offsets
@@ -40,7 +46,9 @@ pub struct Market {
     pub _fee_padding:               u16,
     pub fee_recipient_user:         Pubkey,
 
-    pub bump:             u8,
+    pub primary_category:           u8,
+    pub subcategory:                u16,
+    pub bump:                       u8,
 }
 ```
 
@@ -134,6 +142,7 @@ See [Collateral](./collateral.md) for the full vault and rent model.
 
 ## Next Steps
 
+- [Market Categories](./categories.md)
 - [Events — Multi-Market Grouping](./events.md)
 - [Prices & Order Book](./prices-and-orderbook.md)
 - [Order Lifecycle](./order-lifecycle.md)
