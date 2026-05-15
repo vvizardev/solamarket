@@ -126,9 +126,8 @@ Real-time order book updates are powered by `useOrderBook` — a React hook that
    └─ Keeper simulates FillOrder tx
 
 4. Keeper submits FillOrder tx
-   └─ Program validates crossing
-   └─ Swaps balances between two UserPositions
-   └─ Credits 5 bps fill fee to keeper's UserPosition
+   └─ Program validates crossing and maker/taker ordering
+   └─ Applies taker curve fee, optional maker fee, maker rebate, keeper + treasury split
    └─ Closes fully-filled Order accounts (rent → user)
 
 5. Admin calls ResolveMarket (outcome: YES or NO)

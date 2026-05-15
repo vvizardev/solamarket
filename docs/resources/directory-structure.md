@@ -45,7 +45,7 @@ program/
     ├── lib.rs               ← pub mod declarations
     ├── state/
     │   ├── mod.rs           ← pub use + discriminant constants
-    │   ├── market.rs        ← Market struct (244 bytes)
+    │   ├── market.rs        ← Market struct (292 bytes)
     │   ├── order.rs         ← Order struct (107 bytes)
     │   ├── user_position.rs ← UserPosition struct (1131 bytes)
     │   └── event.rs         ← Event struct (589 bytes)
@@ -79,7 +79,7 @@ sdk/
 ├── tsconfig.json
 └── src/
     ├── index.ts             ← re-exports everything public
-    ├── constants.ts         ← PROGRAM_ID, FILL_FEE_BPS, IX discriminant map
+    ├── constants.ts         ← PROGRAM_ID, fee defaults / legacy bps, IX discriminant map
     ├── types.ts             ← Market, Order, UserPosition, Event interfaces + enums
     ├── instructions.ts      ← TransactionInstruction builders for all 12 instructions
     ├── accounts.ts          ← Borsh deserializers + RPC fetchers (incl. fetchEvent)

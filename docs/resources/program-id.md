@@ -63,7 +63,11 @@ export const PROGRAM_ID = new PublicKey(
   "11111111111111111111111111111111" // replace with real program ID after deploy
 );
 
-export const FILL_FEE_BPS = 5n;
+/** Default taker curve: see docs/sdk/fees.md */
+export const DEFAULT_TAKER_CURVE_NUMER = 1n;
+export const DEFAULT_TAKER_CURVE_DENOM = 100n;
+/** Legacy flat keeper path used when curve numer = 0 (program-defined) */
+export const LEGACY_KEEPER_FILL_BPS = 5n;
 ```
 
 All SDK functions accept an optional `programId` parameter that defaults to this constant. Pass a custom `programId` to use a different deployment (e.g., in tests):
@@ -119,7 +123,7 @@ MIN_FILL_SIZE=1000
 | # | Topic | Current state | Future path |
 |---|-------|--------------|-------------|
 | 1 | Oracle for resolution | Admin keypair | Switchboard VRF or Pyth price feeds |
-| 2 | Keeper incentives | Flat 5 bps hardcoded | Per-market configurable bps; priority-fee auction |
+| 2 | Keeper incentives | Shares of on-chain **taker fee**; treasury optional | Priority-fee auction; `WithdrawFee` |
 | 3 | Multi-outcome markets | Binary only | N-outcome needs N internal balance fields or dynamic vec |
 | 4 | GTD order expiry | No expiry | Keeper submits `CancelOrder` for expired orders; earns cleanup fee |
 | 5 | Price precision | u64 basis points (0–10000) | u64 with 6 decimals if tighter pricing needed |

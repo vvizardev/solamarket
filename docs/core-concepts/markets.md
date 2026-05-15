@@ -14,25 +14,35 @@ Every market is stored in a single `Market` PDA on-chain. There is one market pe
 
 ## Market Account Fields
 
+The canonical `Market` layout (including **Polymarket-style fee** fields) is defined in [Program — Accounts](../program/accounts.md#market-292-bytes). Total size: **292 bytes** (fixed, rent-exempt).
+
 ```rust
+// Summary — see accounts.md for offsets
 pub struct Market {
-    pub discriminant:     u8,       // = 0 (used for getProgramAccounts filter)
-    pub question_hash:    [u8; 32], // SHA-256(question string)
-    pub vault:            Pubkey,   // USDC ATA controlled by vault_authority PDA
-    pub collateral_mint:  Pubkey,   // mock USDC mint (devnet)
-    pub yes_mint:         Pubkey,   // default() until TokenizePosition is called
-    pub no_mint:          Pubkey,   // default() until TokenizePosition is called
-    pub end_time:         i64,      // Unix timestamp; no new orders after this
+    pub discriminant:     u8,
+    pub question_hash:    [u8; 32],
+    pub vault:            Pubkey,
+    pub collateral_mint:  Pubkey,
+    pub yes_mint:         Pubkey,
+    pub no_mint:          Pubkey,
+    pub end_time:         i64,
     pub resolved:         bool,
-    pub winning_outcome:  u8,       // 0=unresolved, 1=YES, 2=NO
-    pub admin:            Pubkey,   // only key that can call ResolveMarket
+    pub winning_outcome:  u8,
+    pub admin:            Pubkey,
     pub order_count:      u64,
-    pub event:            Pubkey,   // Pubkey::default() = standalone; set by AddMarketToEvent
+    pub event:            Pubkey,
+
+    pub taker_curve_numer:          u32,
+    pub taker_curve_denom:          u32,
+    pub maker_fee_bps:              u16,
+    pub maker_rebate_of_taker_bps:  u16,
+    pub keeper_reward_of_taker_bps: u16,
+    pub _fee_padding:               u16,
+    pub fee_recipient_user:         Pubkey,
+
     pub bump:             u8,
 }
 ```
-
-Total size: **244 bytes** (fixed, rent-exempt).
 
 The `event` field at offset 211 is `Pubkey::default()` for standalone markets. When a market belongs to a multi-market event, it is set to the Event PDA pubkey via the `AddMarketToEvent` instruction. This allows efficient off-chain querying of all markets in an event using a single `getProgramAccounts` memcmp filter.
 

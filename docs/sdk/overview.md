@@ -42,7 +42,7 @@ Polymarket's SDK wraps a REST API with HMAC authentication and EIP-712 order sig
 | `accounts.ts` | Borsh deserializers + RPC fetchers for Market, Order, UserPosition |
 | `pda.ts` | `findMarketPda`, `findOrderPda`, `findUserPositionPda`, `findVaultAuthorityPda` |
 | `types.ts` | TypeScript interfaces and enums mirroring Rust structs |
-| `constants.ts` | `PROGRAM_ID`, `FILL_FEE_BPS`, instruction discriminant map |
+| `constants.ts` | `PROGRAM_ID`, taker curve defaults, instruction discriminant map |
 | `dlob/DLOB.ts` | In-memory order book (sorted bids + asks) |
 | `dlob/DLOBNode.ts` | Wrapper around an `Order` with `remaining`, `applyFill` helpers |
 | `dlob/OrderSubscriber.ts` | `getProgramAccounts` + WebSocket subscription for real-time order feeds |

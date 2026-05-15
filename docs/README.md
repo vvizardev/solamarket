@@ -99,7 +99,7 @@ See [Pinocchio Migration Guide](./program/pinocchio.md) to adopt these improveme
 | Settlement | Polygon Exchange contract | Solana program CPI |
 | Collateral | pUSD (Polygon USDC) | Mock USDC (devnet SPL mint) |
 | Auth | EIP-712 + HMAC | Solana keypair (Ed25519) |
-| Fees | Taker: `0.03–0.07 × feeRate × p×(1−p)`; maker rebates via treasury | Flat 5 bps fill fee → keeper; no maker/taker fees |
+| Fees | Taker: `feeRate × p×(1−p)` on notional; maker rebate from taker fee; optional maker bps | Same shape + market params on `Market`; splits → maker, keeper, treasury (see [SDK — Fees](./sdk/fees.md)) |
 
 ---
 

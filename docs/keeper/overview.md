@@ -67,7 +67,7 @@ This mirrors Drift Protocol's permissionless filler design, where anyone can sub
 |-----------|--------------------|--------------------|
 | Who runs it | Polymarket Inc. (centralized) | Anyone |
 | Permission | Required | None (permissionless) |
-| Revenue | Transaction fees / spread capture | 5 bps fill fee |
+| Revenue | Transaction fees / spread capture | Configurable share of **taker fee** (+ treasury routing) |
 | Order censorship | Possible | Not possible |
 | Single point of failure | Yes | No (any keeper can fill) |
 

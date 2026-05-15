@@ -35,6 +35,13 @@ Creates the Market PDA and initializes the USDC vault ATA.
 |-------|------|-------------|
 | `question_hash` | `[u8; 32]` | SHA-256 hash of the question string |
 | `end_time` | `i64` | Unix timestamp; no new orders after this |
+| `fee_recipient_user` | `Pubkey` | Treasury owner for `taker_fee` remainder + `maker_fee` (non-default in production) |
+| `taker_curve_numer` / `taker_curve_denom` | `u32` / `u32` | Polymarket-style curve scalars (see [SDK — Fees](../sdk/fees.md); `0` numer disables curve in favor of legacy keeper path) |
+| `maker_fee_bps` | `u16` | Optional maker fee on `fill_cost` |
+| `maker_rebate_of_taker_bps` | `u16` | Share of `taker_fee` paid to maker |
+| `keeper_reward_of_taker_bps` | `u16` | Share of `taker_fee` paid to keeper |
+
+Exact Borsh packing can mirror the tail fields of [Market](./accounts.md#market-292-bytes); if `CreateMarket` stays minimal in an early build, the program can initialize these from sane defaults and add an `UpdateMarketFees` instruction later.
 
 **Accounts:**
 
@@ -50,7 +57,7 @@ Creates the Market PDA and initializes the USDC vault ATA.
 | 7 | — | associated_token_program |
 | 8 | — | rent sysvar |
 
-**Constraints:** None beyond signer check. Admin is set to the signing key permanently.
+**Constraints:** Admin signer; `fee_recipient_user != Pubkey::default()` in production; `maker_rebate_of_taker_bps + keeper_reward_of_taker_bps <= 10_000`; admin pubkeys stored as today.
 
 ---
 
@@ -152,7 +159,7 @@ Closes the Order PDA; releases locked balance.
 
 **Caller:** Any keeper (permissionless).
 
-Validates two crossing orders and swaps balances.
+Validates two crossing orders and swaps balances, applying **Polymarket-style** economics: **taker fee** (curve), optional **maker fee**, **maker rebate**, **keeper reward**, and **treasury** accrual to the market’s `fee_recipient` `UserPosition`. See [SDK — Fees](../sdk/fees.md).
 
 **Arguments:** `fill_size: u64`
 
@@ -166,7 +173,8 @@ Validates two crossing orders and swaps balances.
 | 3 | writable | ask_order PDA |
 | 4 | writable | bid UserPosition |
 | 5 | writable | ask UserPosition |
-| 6 | writable | keeper UserPosition (receives fill fee + rent) |
+| 6 | writable | keeper UserPosition (receives `keeper_reward` share of taker fee) |
+| 7 | writable | `fee_recipient` UserPosition PDA for `(market, market.fee_recipient_user)` (credits `treasury_share + maker_fee`) |
 
 **Constraints:**
 - `keeper.is_signer`.
@@ -174,6 +182,10 @@ Validates two crossing orders and swaps balances.
 - `bid.side == 0`, `ask.side == 1`.
 - `bid.price >= ask.price`.
 - `fill_size <= bid.remaining` and `fill_size <= ask.remaining`.
+- **Maker/taker:** older `Order.created_at` is maker; tie-break by lexicographic order of order account pubkeys.
+- `maker_rebate_of_taker_bps + keeper_reward_of_taker_bps <= 10_000`.
+- Account #7 must be the `UserPosition` for `(market, market.fee_recipient_user)`. If `fee_recipient_user` equals the **keeper owner**, indices **#6** and **#7** may be the **same** PDA.
+- `CreateMarket` MUST initialize `fee_recipient_user` to a real treasury owner (reject `Pubkey::default()` for production deployments).
 - All PDA derivations match expected seeds.
 
 ---

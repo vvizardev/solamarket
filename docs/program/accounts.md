@@ -17,7 +17,9 @@ Each account type has a fixed 1-byte discriminant at offset 0, used to filter ac
 
 ---
 
-## Market (244 bytes)
+## Market (292 bytes) {#market-292-bytes}
+
+Fee fields support Polymarket-style **taker curve**, **maker fee**, **maker rebate**, and **treasury** routing. See [SDK — Fees](../sdk/fees.md).
 
 ```rust
 pub struct Market {
@@ -33,9 +35,19 @@ pub struct Market {
     pub admin:            Pubkey,   // offset 171
     pub order_count:      u64,      // offset 203
     pub event:            Pubkey,   // offset 211  Pubkey::default() = standalone market
-    pub bump:             u8,       // offset 243
+
+    // Fee schedule (0/1 curve numer or denom disables taker curve fee)
+    pub taker_curve_numer:           u32,    // offset 243
+    pub taker_curve_denom:           u32,    // offset 247
+    pub maker_fee_bps:               u16,    // offset 251
+    pub maker_rebate_of_taker_bps:   u16,    // offset 253
+    pub keeper_reward_of_taker_bps:  u16,    // offset 255
+    pub _fee_padding:                u16,    // offset 257  reserved / alignment
+    pub fee_recipient_user:          Pubkey, // offset 259  treasury owner; default → keeper absorbs treasury_share
+
+    pub bump:                        u8,     // offset 291
 }
-// Total: 244 bytes
+// Total: 292 bytes
 ```
 
 `event` is `Pubkey::default()` (all zeros) for standalone markets. When a market belongs to a multi-market event, this field is set to the event's PDA pubkey via `AddMarketToEvent`. This allows a single `getProgramAccounts` memcmp filter at offset 211 to retrieve all markets in an event without loading the Event account first.
@@ -56,9 +68,22 @@ interface Market {
   admin:           PublicKey;
   orderCount:      bigint;
   event:           PublicKey;    // Pubkey.default() = standalone
+
+  takerCurveNumer:          number;    // u32 LE
+  takerCurveDenom:          number;    // u32 LE
+  makerFeeBps:              number;    // u16 — bps of fill_cost
+  makerRebateOfTakerBps:    number;    // u16 — share of taker_fee
+  keeperRewardOfTakerBps:   number;    // u16 — share of taker_fee
+  feePadding:               number;    // u16 reserved
+  feeRecipientUser:         PublicKey; // treasury; default pubkey → merge treasury into keeper
+
   bump:            number;
 }
 ```
+
+**Suggested defaults** for a Polymarket-like mainnet launch: `takerCurveNumer = 1`, `takerCurveDenom = 100`, `makerFeeBps = 0`, `makerRebateOfTakerBps = 7000` (example), `keeperRewardOfTakerBps = 500`, `feeRecipientUser = <treasury wallet>`, with `makerRebate + keeperReward ≤ 10_000`.
+
+**Legacy migration:** To approximate the old flat **5 bps from the ask** model, set `takerCurveNumer = 0`, `keeperRewardOfTakerBps = 10_000`, `makerRebateOfTakerBps = 0`, and implement the fallback `keeper_reward = fill_size × 5 / 10_000` when the curve is disabled (exact policy lives in the program).
 
 Deserialize:
 

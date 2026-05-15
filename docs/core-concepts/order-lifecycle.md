@@ -27,9 +27,10 @@ FillOrder instruction (keeper submits)
 ├─ verify bid.market == ask.market
 ├─ verify bid.price >= ask.price
 ├─ compute fill_size = min(bid.remaining, ask.remaining)
-├─ bid UserPosition: locked_collateral -= fill_cost; yes_balance += fill_size
-├─ ask UserPosition: locked_yes -= fill_size;        no_balance  += fill_proceeds
-├─ credit keeper:    no_balance += fill_fee  (5 bps of fill_size)
+├─ determine maker/taker from Order.created_at (+ pubkey tie-break)
+├─ compute fill_cost, taker fee (p×(1−p) curve), optional maker_fee
+├─ split taker fee → maker rebate, keeper reward, treasury share
+├─ apply UserPosition debits/credits (see [SDK — Fees](../sdk/fees.md))
 ├─ update Order.fill_amount on both orders
 └─ close fully-filled Order accounts → lamports to order creator
 
@@ -85,24 +86,27 @@ The keeper submits both crossing orders' pubkeys. The program:
 2. Verifies `bid.side == 0` and `ask.side == 1`.
 3. Verifies `bid.price >= ask.price` (crossing condition).
 4. Computes `fill_size = min(args.fill_size, bid.remaining, ask.remaining)`.
-5. Updates both `UserPosition` accounts:
-
-| UserPosition | Change |
-|-------------|--------|
-| Bid (buyer) | `locked_collateral -= fill_cost`; `yes_balance += fill_size` |
-| Ask (seller) | `locked_yes -= fill_size`; `no_balance += (fill_cost - fill_fee)` |
-| Keeper | `no_balance += fill_fee` |
-
-6. Updates `Order.fill_amount` on both orders.
-7. Closes fully-filled Order accounts, transferring lamports back to the order creator.
-
-### Fill cost formula
+5. Classifies **maker** vs **taker** using `bid_order.created_at` and `ask_order.created_at` (older order = maker; tie-break by lexicographic `Pubkey` order of the order accounts).
+6. Computes fees per [SDK — Fees](../sdk/fees.md):
 
 ```
-fill_cost = fill_size × bid.price / 10_000
-fill_fee  = fill_size × 5 / 10_000      (5 basis points)
-ask_proceeds = fill_cost - fill_fee
+fill_cost   = fill_size × bid.price / 10_000
+taker_fee   = fill_cost × bid.price × (10_000 − bid.price) × taker_curve_numer
+              / (taker_curve_denom × 10_000 × 10_000)
+maker_fee   = fill_cost × maker_fee_bps / 10_000
+maker_rebate    = taker_fee × maker_rebate_of_taker_bps    / 10_000
+keeper_reward   = taker_fee × keeper_reward_of_taker_bps   / 10_000
+treasury_share  = taker_fee − maker_rebate − keeper_reward
 ```
+
+7. Updates `UserPosition` accounts according to whether the **taker is the bid or the ask** (two symmetrical cases in the fees doc).
+
+8. Updates `Order.fill_amount` on both orders.
+9. Closes fully-filled Order accounts, transferring lamports back to the order creator.
+
+### Balance changes (summary)
+
+The exact debits/credits depend on which side is taker; see [Balance updates on FillOrder](../sdk/fees.md#balance-updates-on-fillorder).
 
 ### Partial fills
 

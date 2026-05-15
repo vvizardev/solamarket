@@ -1,26 +1,31 @@
 # Keeper Economics
 
-> Fill fees, costs, and profitability model for running a keeper bot.
+> Taker-fee splits, keeper rewards, costs, and profitability for running a keeper bot.
 
 ---
 
 ## Revenue Sources
 
-A keeper earns from one source per successful `FillOrder`. Closed order rent is returned to the order creator.
-
-### 1. Fill Fee (USDC-equivalent `no_balance`)
+On each successful `FillOrder`, the keeper earns **`keeper_reward`**: a configured fraction of the **taker fee** (Polymarket-style probability curve) in USDC-equivalent `no_balance`.
 
 ```
-fill_fee = fill_size × 5 / 10_000   (5 basis points = 0.05%)
+taker_fee     = fill_cost × bid.price × (10_000 − bid.price) × taker_curve_numer
+                / (taker_curve_denom × 10_000 × 10_000)
+
+keeper_reward = taker_fee × keeper_reward_of_taker_bps / 10_000
 ```
 
-The fill fee is credited to `keeper_pos.no_balance` — the keeper's internal collateral balance in the market. To access it as real USDC, the keeper must call `Merge` (which requires also holding `yes_balance`) or use the internal balance to place orders.
+`keeper_reward` is credited to **`keeper_pos.no_balance`**.
 
-> **Current limitation:** The fill fee is credited as `no_balance`, not as direct USDC. A future `WithdrawFee` instruction could allow keepers to withdraw directly to their USDC ATA.
+If the market routes **`treasury_share`** to the same `UserPosition` as the keeper (because `fee_recipient_user` is the keeper’s wallet), accounts **#6** and **#7** in `FillOrder` may be the **same** PDA — credits for keeper reward, treasury, and **maker_fee** still add correctly on one balance.
 
-### 2. Order Account Rent (SOL) → Order Creator
+The **maker rebate** accrues to the **maker**, not the keeper.
 
-When the handler closes a fully-filled `Order` PDA, the rent-exempt lamports (~0.0010 SOL per order) are returned to the **order creator** — the user who originally placed and funded the order.
+> **Current limitation:** Rewards are internal `no_balance`, not SPL USDC, until a future **`WithdrawFee`** instruction lands.
+
+### Order Account Rent (SOL) — Order Creator
+
+When a fully-filled `Order` PDA closes, rent lamports (~0.0010 SOL) return to the **order creator**. That is **not** keeper revenue.
 
 ---
 
@@ -29,70 +34,60 @@ When the handler closes a fully-filled `Order` PDA, the rent-exempt lamports (~0
 | Cost | Unit | Typical amount |
 |------|------|----------------|
 | Solana base tx fee | SOL | ~0.000005 SOL per signature |
-| Priority fee (optional) | SOL | Variable; keeper's choice |
-| Failed/raced tx | SOL | Fee burned even if fill already taken |
-| RPC provider | USD/month | $0 (free tier) to $50+ (dedicated) |
+| Priority fee (optional) | SOL | Variable |
+| Failed/raced tx | SOL | Paid even if another keeper won the fill |
+| RPC provider | USD/month | Free tier to dedicated |
 
 ---
 
 ## Profitability Model
 
 ```
-revenue_per_fill = fill_fee (USDC no_balance)
+revenue_per_fill ≈ keeper_reward
+                   (+ treasury_share + maker_fee when fee recipient is the keeper wallet)
 cost_per_fill    = tx_base_fee + priority_fee + race_losses
-profit_per_fill  = revenue - cost
+profit_per_fill  = revenue − cost
 ```
 
-Example at 100 USDC fill, 60 cent market:
+**Worked example:** `fill_size = 100_000_000` (100 YES shares), `bid.price = 6000`, `taker_curve_numer/denom = 1/100`, `keeper_reward_of_taker_bps = 500`:
 
 ```
-fill_fee     = 100_000_000 × 5 / 10_000 = 50_000 units = 0.05 USDC
-order_rent   = ~0.0010 SOL → order creator (not keeper revenue)
-tx_fee       = ~0.000005 SOL
-net_SOL      = -0.000005 SOL  (tx fee only)
-net_USDC     = +0.05 USDC (in no_balance)
+fill_cost = 100_000_000 × 6000 / 10_000 = 60_000_000    (60 USDC notional)
+curve     = 6000 × 4000 = 24_000_000
+taker_fee = 60_000_000 × 24_000_000 × 1 / (100 × 10_000 × 10_000)
+          = 144_000                                     (0.144 USDC)
+
+keeper_reward = 144_000 × 500 / 10_000 = 7_200          (0.0072 USDC)
 ```
 
-For small fills (< ~200 USDC), the fill fee in USDC may not justify the opportunity cost of the transaction. The `MIN_FILL_SIZE` setting lets you skip economically unattractive fills.
+Most of **`taker_fee`** can go to **maker rebate** and **treasury** depending on `Market` params; the keeper’s line item may be modest unless `keeper_reward_of_taker_bps` is set high or the keeper wallet is also the fee recipient.
 
 ---
 
 ## Competition and Front-Running
 
-Multiple keepers can race on the same crossing. The first transaction to land wins the fill fee; losers pay tx fees for nothing.
+Multiple keepers can race the same cross. First tx to land gets the work; others pay fees for nothing.
 
-**Strategies keepers can use:**
-- **Simulation check** — simulate before sending to skip already-filled orders (implemented in `Filler.ts`).
-- **Priority fees** — pay higher compute unit prices to get faster inclusion.
-- **Dedicated RPC** — lower latency to the validator reduces time to first fill.
-- **JIT-style window** — not implemented; future extension modeled after Drift's JIT auction.
-
-The plan acknowledges front-running as an open issue:
-
-> *"Keepers can race on fills. A short JIT window (like Drift's) or commit-reveal scheme could mitigate if needed."*
+**Mitigations:** simulation before send, priority fees, low-latency RPC. A future JIT-style window could reduce races (see [Program overview](../program/overview.md)).
 
 ---
 
 ## Comparing to Drift Protocol Keepers
 
-Drift Protocol keepers (fillers) operate under a similar incentive model:
-
-| Dimension | Drift | This project |
-|-----------|-------|--------------|
-| Fill reward | Dynamic fee + discount token | Flat 5 bps |
-| Fee currency | USDC (from taker) | `no_balance` (not direct USDC) |
-| Priority fee auction | Yes (revenue share) | Not implemented |
-| JIT auction | Yes | Not implemented |
-| Cleanup fees | Yes (cancel expired orders) | Not implemented |
+| Dimension | Drift | This project (spec) |
+|-----------|-------|---------------------|
+| Fill reward | Dynamic taker fee / incentives | Shares of **taker_fee** + optional treasury routing |
+| Fee currency | Often direct USDC | Internal `no_balance` until `WithdrawFee` |
+| Priority fee auction | Yes | Not specified |
+| Cleanup fees | Expired orders | Not implemented |
 
 ---
 
 ## Future Improvements
 
-1. **Configurable `fill_fee_bps` per market** — stored as a field on the `Market` account rather than hardcoded to `5`.
-2. **Direct USDC withdrawal** — a `WithdrawFee` instruction letting keepers drain `no_balance` to their USDC ATA without needing a matched `yes_balance`.
-3. **Priority fee auction** — keepers bid via Solana priority fees; the revenue is shared with the protocol to fund a rebate pool.
-4. **GTD cleanup fees** — keepers earn a small fee for cancelling expired GTD orders.
+1. **`WithdrawFee`** — move fee balances to a USDC ATA without `Merge`.
+2. **Per-market tuning** — `taker_curve_*`, rebate, and keeper bps chosen at `CreateMarket`.
+3. **GTD cleanup fees** — reward keepers for cancelling expired orders.
 
 ---
 

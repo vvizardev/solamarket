@@ -138,7 +138,7 @@ A TypeScript daemon that provides decentralized order matching without a central
 1. `OrderSubscriber` — `getProgramAccounts` with `memcmp` filter on account discriminant byte + market pubkey; subscribes to changes via WebSocket.
 2. `DLOB` — maintains two sorted lists per market: bids (price DESC, FIFO), asks (price ASC, FIFO).
 3. Crossing detection — when `best_bid.price >= best_ask.price`, a fill is possible.
-4. `Filler` — constructs and submits a `FillOrder` transaction. Permissionless; first keeper to land wins. Earns `fill_fee_bps` of fill size.
+4. `Filler` — constructs and submits a `FillOrder` transaction (includes **treasury** `UserPosition`). Permissionless; first keeper to land wins. Earns `keeper_reward_of_taker_bps` share of the **taker fee** (see `docs/sdk/fees.md`).
 
 #### 3. SDK (`sdk/`)
 
@@ -511,7 +511,7 @@ pub enum InstructionData {
   2. Send with `sendAndConfirmTransaction`
   3. On `AccountNotFound`: order was filled by another keeper, remove from DLOB
   4. On success: update fill amounts in local DLOB cache
-- Fee: `fill_fee_bps = 5` (0.05% of fill size), paid out inside `FillOrder` handler
+- Fees: Polymarket-style **taker curve** + **maker rebate** + optional **maker fee**; keeper cut is `keeper_reward_of_taker_bps` of `taker_fee` (`docs/sdk/fees.md`)
 
 ### Phase 4: Frontend (Days 7–8)
 
@@ -593,7 +593,7 @@ For keeper WebSocket reliability, prefer a dedicated devnet RPC (Helius / Alchem
 ## Open Questions / Decisions Deferred
 
 1. **Oracle for resolution** — Phase 1 uses an admin keypair. Phase 2 can integrate Switchboard VRF or Pyth price feeds for automated resolution.
-2. **Keeper incentives** — Flat `fill_fee_bps` for now. Could become a priority-fee auction among competing keepers.
+2. **Keeper incentives** — On-chain **taker fee** split (keeper / treasury / maker rebate). Optional legacy flat path when curve disabled. Priority-fee auction still an open idea.
 3. **Multi-outcome markets** — Binary only. N-outcome extension needs N internal balance fields or a dynamic vec.
 4. **GTD order expiry** — Keeper could submit `CancelOrder` for expired orders and earn a cleanup fee.
 5. **Price precision** — u64 basis points (0–10000, 2 decimal places). Could switch to u64 with 6 decimals if tighter pricing is needed.

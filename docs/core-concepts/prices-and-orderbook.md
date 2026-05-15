@@ -99,7 +99,7 @@ Best ask: 6000 bps  (seller willing to accept 0.60)
 → bid ≥ ask  →  crossing  →  fill executes at ask price
 ```
 
-When the keeper bot detects a crossing, it submits a `FillOrder` transaction. The fill executes at the **bid price** (the buyer pays their stated price, the seller receives `bid_price - fill_fee`).
+When the keeper bot detects a crossing, it submits a `FillOrder` transaction. Notional is **fill_cost = fill_size × bid.price / 10_000**; **taker / maker fees and maker rebates** are applied per [SDK — Fees](../sdk/fees.md) (not a single flat ask-side deduction).
 
 ---
 
