@@ -12,7 +12,7 @@ This project charges a single protocol fee: a **fill fee paid to the keeper** at
 |----------|------|-------|-----------|
 | Fill fee | 5 bps (0.05%) | Ask side (seller) | Keeper's `UserPosition.no_balance` |
 | Solana tx fee | ~5,000 lamports/signature | Keeper wallet (SOL) | Solana validators |
-| Order rent | ~0.0010 SOL | Order placer | Returned on close; excess to keeper |
+| Order rent | ~0.0010 SOL | Order placer | Order placer (on full fill or cancel) |
 
 There are **no maker fees**, **no taker fees**, and **no platform fees** — only the 5 bps fill fee.
 
@@ -50,12 +50,13 @@ Ask User
   no_balance += fill_cost - fill_fee
 ```
 
-### Step 3 — Keeper earns fill fee + order rent
+### Step 3 — Keeper earns fill fee; order rent returns to creators
 
 ```
 FillOrder (on-chain)
-  ├─ keeper.no_balance  += fill_fee           (USDC-equiv)
-  └─ keeper.UserPosition += order_rent lamports  (SOL, if fully filled)
+  ├─ keeper.no_balance       += fill_fee           (USDC-equiv)
+  ├─ bid_order PDA closed   → lamports to bid order placer (if fully filled)
+  └─ ask_order PDA closed   → lamports to ask order placer (if fully filled)
 
 Keeper (later)
   ├─ Merge(yes_balance + no_balance) → collateral_balance   [current path]
@@ -68,7 +69,8 @@ Keeper (later)
 |-------|----------------|
 | Bid (buyer) | `locked_collateral −fill_cost`, `yes_balance +fill_size` |
 | Ask (seller) | `locked_yes −fill_size`, `no_balance +(fill_cost − fill_fee)` |
-| Keeper | `no_balance +fill_fee`, `+~0.001 SOL` (rent, fully-filled orders only) |
+| Keeper | `no_balance +fill_fee` |
+| Order placers | `+~0.001 SOL` rent reclaimed per fully closed Order PDA (each side's placer) |
 | Solana validators | `+~0.000005 SOL` tx fee (paid by keeper wallet) |
 
 ---
@@ -117,18 +119,18 @@ The keeper's `minFillSize` config (default: `1000` units) may be set below this 
 
 ---
 
-## Order Rent as Additional Keeper Revenue
+## Order Rent Returned to Order Placers
 
-When the `FillOrder` handler closes a **fully-filled** Order PDA, the account's rent-exempt lamports are transferred to the **keeper's UserPosition account** (not back to the original order placer):
+When the `FillOrder` handler closes a **fully-filled** Order PDA, the rent-exempt lamports (~0.0010 SOL) are returned to the **user who placed that order** — the same party who originally paid rent on `PlaceOrder`. On a typical fill two Order PDAs may close (bid and ask), so each respective placer reclaims their own account's lamports.
 
 ```rust
-// From fill_order.rs
-let lamps = bid_order_ai.lamports();
-**bid_order_ai.lamports.borrow_mut()   = 0;
-**keeper_pos_ai.lamports.borrow_mut() += lamps;
+// Illustrative: rent follows each closed Order PDA to its placer
+let lamps = order_ai.lamports();
+**order_ai.lamports.borrow_mut()     = 0;
+**order_placer_wallet.lamports      += lamps;
 ```
 
-An Order account holds ~0.0010 SOL in rent. A keeper who fills many orders accumulates this SOL in their UserPosition, which they can recover via a future withdrawal instruction.
+An Order account holds ~0.0010 SOL in rent. The placer temporarily locks that SOL while the order rests; it comes back when the order is fully filled or cancelled.
 
 ---
 
@@ -137,7 +139,8 @@ An Order account holds ~0.0010 SOL in rent. A keeper who fills many orders accum
 A keeper pays SOL tx fees for every `FillOrder` transaction it submits. Revenue comes from:
 
 1. **Fill fee** (0.05% of fill size in USDC-equivalent `no_balance`)
-2. **Order account rent** (SOL, ~0.001 per fully-filled order)
+
+Order account rent is not keeper revenue — it returns to whoever placed each closed order.
 
 At current devnet SOL prices, this model is illustrative. On mainnet, profitability depends on:
 
@@ -160,7 +163,7 @@ Polymarket's fee structure is significantly more complex:
 | Fill / matching fee | None | 5 bps to keeper |
 | Fee recipient | Protocol treasury → maker rebate pool | Keeper `UserPosition.no_balance` |
 | Fee currency | USDC (direct) | `no_balance` (internal; requires `Merge` to access as USDC) |
-| Order rent | N/A (EVM gas model) | ~0.001 SOL recycled to keeper per fully-filled PDA |
+| Order rent | N/A (EVM gas model) | ~0.001 SOL per fully-filled PDA → order placer |
 | Affiliate / referral fee | Yes (via API key) | Not implemented |
 
 **Key architectural difference:** Polymarket's taker fee is probability-weighted — it is highest at 50/50 markets and falls toward zero at the extremes (`p × (1−p)` peaks at `p = 0.5`). Revenue flows to a treasury that funds maker rebates. This project's flat 5 bps goes directly to the keeper doing the matching work; there is no treasury or rebate pool.

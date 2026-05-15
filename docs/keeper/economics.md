@@ -6,7 +6,7 @@
 
 ## Revenue Sources
 
-A keeper earns from two sources per successful `FillOrder`:
+A keeper earns from one source per successful `FillOrder`. Closed order rent is returned to the order creator.
 
 ### 1. Fill Fee (USDC-equivalent `no_balance`)
 
@@ -18,11 +18,9 @@ The fill fee is credited to `keeper_pos.no_balance` — the keeper's internal co
 
 > **Current limitation:** The fill fee is credited as `no_balance`, not as direct USDC. A future `WithdrawFee` instruction could allow keepers to withdraw directly to their USDC ATA.
 
-### 2. Order Account Rent (SOL)
+### 2. Order Account Rent (SOL) → Order Creator
 
-When the handler closes a fully-filled `Order` PDA, the rent-exempt lamports (~0.0010 SOL per order) are transferred to the keeper's `UserPosition` account instead of back to the order owner.
-
-Over many fills, this accumulates meaningful SOL revenue.
+When the handler closes a fully-filled `Order` PDA, the rent-exempt lamports (~0.0010 SOL per order) are returned to the **order creator** — the user who originally placed and funded the order.
 
 ---
 
@@ -40,7 +38,7 @@ Over many fills, this accumulates meaningful SOL revenue.
 ## Profitability Model
 
 ```
-revenue_per_fill = fill_fee (USDC no_balance) + order_rent × fills_closed (SOL)
+revenue_per_fill = fill_fee (USDC no_balance)
 cost_per_fill    = tx_base_fee + priority_fee + race_losses
 profit_per_fill  = revenue - cost
 ```
@@ -49,9 +47,9 @@ Example at 100 USDC fill, 60 cent market:
 
 ```
 fill_fee     = 100_000_000 × 5 / 10_000 = 50_000 units = 0.05 USDC
-order_rent   = ~0.0010 SOL (if both orders fully filled)
+order_rent   = ~0.0010 SOL → order creator (not keeper revenue)
 tx_fee       = ~0.000005 SOL
-net_SOL      = +0.0010 - 0.000005 ≈ +0.001 SOL  (from rent)
+net_SOL      = -0.000005 SOL  (tx fee only)
 net_USDC     = +0.05 USDC (in no_balance)
 ```
 

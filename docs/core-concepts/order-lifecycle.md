@@ -31,7 +31,7 @@ FillOrder instruction (keeper submits)
 ├─ ask UserPosition: locked_yes -= fill_size;        no_balance  += fill_proceeds
 ├─ credit keeper:    no_balance += fill_fee  (5 bps of fill_size)
 ├─ update Order.fill_amount on both orders
-└─ close fully-filled Order accounts → lamports to keeper
+└─ close fully-filled Order accounts → lamports to order creator
 
       │
       ▼  (if market resolves)
@@ -94,7 +94,7 @@ The keeper submits both crossing orders' pubkeys. The program:
 | Keeper | `no_balance += fill_fee` |
 
 6. Updates `Order.fill_amount` on both orders.
-7. Closes fully-filled Order accounts, transferring lamports to the keeper's UserPosition account.
+7. Closes fully-filled Order accounts, transferring lamports back to the order creator.
 
 ### Fill cost formula
 
