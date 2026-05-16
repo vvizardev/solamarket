@@ -74,4 +74,4 @@ export const DISCRIMINANT_USER_POSITION: number = 2;
 export const DISCRIMINANT_EVENT: number         = 3;
 
 /** FillOrder instruction discriminant (index in processor.rs dispatch table) */
-export const FILL_ORDER_DISCRIMINANT: number = 5;
+export const FILL_ORDER_DISCRIMINANT: number = 7;

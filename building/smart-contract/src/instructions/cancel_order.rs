@@ -1,4 +1,4 @@
-/// Instruction 4 — CancelOrder
+/// Instruction 6 — CancelOrder
 ///
 /// Closes the Order PDA and releases locked balance back to UserPosition.
 /// Rent lamports are returned to the order placer (user).

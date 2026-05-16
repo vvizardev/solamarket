@@ -1,4 +1,4 @@
-/// Instruction 8 — TokenizePosition
+/// Instruction 10 — TokenizePosition
 ///
 /// Converts internal YES/NO balances to real SPL tokens (opt-in).
 /// Lazily initialises YES and NO mints on first call.

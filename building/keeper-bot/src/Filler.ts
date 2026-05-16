@@ -12,7 +12,7 @@ import { Market, FILL_ORDER_DISCRIMINANT } from "./types";
 import { findUserPositionPda } from "./pda";
 
 /**
- * Builds and submits `FillOrder` transactions (instruction discriminant 5).
+ * Builds and submits `FillOrder` transactions (instruction discriminant 7).
  *
  * Account layout required by the on-chain program:
  *   0 — keeper          (writable, signer)

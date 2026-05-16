@@ -1,4 +1,4 @@
-/// Instruction 9 — CreateEvent
+/// Instruction 11 — CreateEvent
 ///
 /// Creates an Event PDA that groups multiple markets under a shared label,
 /// end time, and exclusivity mode.

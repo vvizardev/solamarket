@@ -1,4 +1,4 @@
-/// Instruction 11 — ResolveEvent
+/// Instruction 13 — ResolveEvent
 ///
 /// Resolves an exclusive multi-market event atomically:
 ///   - Markets at winning_index → YES

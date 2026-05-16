@@ -1,4 +1,4 @@
-/// Instruction 3 — PlaceOrder
+/// Instruction 5 — PlaceOrder
 ///
 /// Creates an Order PDA and locks the appropriate balance:
 ///   - bid: locks collateral proportional to size × price / 10_000

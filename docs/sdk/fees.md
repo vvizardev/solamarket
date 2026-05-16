@@ -2,6 +2,8 @@
 
 > Taker fee (Polymarket-style curve), optional maker fee, maker rebate, keeper reward, and cost breakdown.
 
+For a narrative walkthrough of accounts and configuration (**including `Market` vs `GlobalConfig`**), see [Core Concepts — Fee Flow](../core-concepts/fee-flow.md).
+
 ---
 
 ## Fee Structure
@@ -17,7 +19,7 @@ Fees are charged on **`FillOrder`**. The design mirrors **Polymarket’s economi
 | Solana tx fee | Per signature | Keeper wallet (SOL) | Validators |
 | Order rent | Per `Order` PDA | Order placer | Returned to placer on full fill or cancel |
 
-**Legacy note:** Markets MAY set `taker_curve_numer = 0` and use a separate **minimum keeper reward** path (see [Keeper — Economics](../keeper/economics.md)) so behavior stays close to the old flat **5 bps** fill fee during migration.
+**Curve disabled:** If `taker_curve_numer = 0` or `taker_curve_denom = 0`, the program sets **`taker_fee = 0`**, so **`keeper_reward`** and **`maker_rebate`** (both derived from `taker_fee`) are also **0**. Only **`maker_fee`** (if `maker_fee_bps > 0`) still accrues to the treasury position.
 
 ---
 

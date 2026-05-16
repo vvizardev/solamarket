@@ -1,4 +1,4 @@
-/// Instruction 6 — ResolveMarket
+/// Instruction 8 — ResolveMarket
 ///
 /// Admin sets the market as resolved with a YES or NO outcome.
 ///

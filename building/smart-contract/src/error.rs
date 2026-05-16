@@ -39,7 +39,11 @@ pub enum PredictionMarketError {
     EventAdminMismatch   = 44,
     InvalidMarketIndex   = 45,
     EventMarketMismatch  = 46,
-    NotExclusiveEvent    = 47,
+    NotExclusiveEvent       = 47,
+
+    // Global config (48–49)
+    /// UpdateGlobalConfig: signer is not `GlobalConfig::admin`.
+    NotGlobalAdmin = 48,
 }
 
 impl From<PredictionMarketError> for ProgramError {

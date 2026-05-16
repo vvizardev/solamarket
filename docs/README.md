@@ -32,6 +32,7 @@ Get your environment set up and place your first order in minutes.
 | [Positions & Tokens](./core-concepts/positions-and-tokens.md) | Internal balances, YES/NO tokens, and optional SPL tokenization |
 | [Collateral (mock USDC)](./core-concepts/collateral.md) | Devnet USDC, vault model, and rent economics |
 | [Order Lifecycle](./core-concepts/order-lifecycle.md) | Place → fill → cancel → redeem end-to-end |
+| [Fee Flow](./core-concepts/fee-flow.md) | End-to-end fee routing on `FillOrder` (market vs global config) |
 | [Resolution](./core-concepts/resolution.md) | Admin resolution, winning outcome, and payout |
 | [Negative Risk Markets](./core-concepts/negative-risk.md) | Complete sets, negative-risk positions, and cross-market collateral conversion |
 

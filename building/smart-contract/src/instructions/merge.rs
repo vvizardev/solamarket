@@ -1,4 +1,4 @@
-/// Instruction 2 — Merge
+/// Instruction 4 — Merge
 ///
 /// Burns equal YES + NO internal balance; transfers USDC back from vault to user.
 ///

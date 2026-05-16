@@ -1,4 +1,4 @@
-/// Instruction 7 — Redeem
+/// Instruction 9 — Redeem
 ///
 /// Post-resolution: exchange winning-outcome internal balance for USDC at 1:1.
 ///

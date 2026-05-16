@@ -1,4 +1,4 @@
-/// Instruction 1 — Split
+/// Instruction 3 — Split
 ///
 /// Deposits USDC into the vault; credits yes_balance and no_balance equally.
 /// Creates the UserPosition PDA on the first call for this user × market pair.

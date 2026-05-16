@@ -1,5 +1,6 @@
 use pinocchio::pubkey::{create_program_address, find_program_address, Pubkey};
 
+pub const SEED_GLOBAL_CONFIG:   &[u8] = b"global_config";
 pub const SEED_MARKET:          &[u8] = b"market";
 pub const SEED_VAULT_AUTHORITY: &[u8] = b"vault_authority";
 pub const SEED_ORDER:           &[u8] = b"order";
@@ -9,6 +10,10 @@ pub const SEED_YES_MINT_AUTH:   &[u8] = b"yes_mint_authority";
 pub const SEED_NO_MINT_AUTH:    &[u8] = b"no_mint_authority";
 
 // ── find (off-chain style, iterates bumps) ────────────────────────────────
+
+pub fn find_global_config_pda(program_id: &Pubkey) -> (Pubkey, u8) {
+    find_program_address(&[SEED_GLOBAL_CONFIG], program_id)
+}
 
 pub fn find_market_pda(question_hash: &[u8; 32], program_id: &Pubkey) -> (Pubkey, u8) {
     find_program_address(&[SEED_MARKET, question_hash], program_id)
@@ -57,6 +62,19 @@ pub fn find_no_mint_authority_pda(market: &Pubkey, program_id: &Pubkey) -> (Pubk
 
 use pinocchio::program_error::ProgramError;
 use crate::error::PredictionMarketError;
+
+pub fn verify_global_config_pda(
+    key: &Pubkey,
+    bump: u8,
+    program_id: &Pubkey,
+) -> Result<(), ProgramError> {
+    let expected =
+        create_program_address(&[SEED_GLOBAL_CONFIG, &[bump]], program_id)?;
+    if key != &expected {
+        return Err(PredictionMarketError::InvalidPda.into());
+    }
+    Ok(())
+}
 
 pub fn verify_market_pda(
     key: &Pubkey,

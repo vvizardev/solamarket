@@ -1,4 +1,4 @@
-/// Instruction 5 — FillOrder
+/// Instruction 7 — FillOrder
 ///
 /// Permissionless keeper instruction. Validates two crossing orders (bid >= ask),
 /// swaps YES/NO balances, applies Polymarket-style fees (taker curve, maker rebate,

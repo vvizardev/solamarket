@@ -1,4 +1,4 @@
-/// Instruction 10 — AddMarketToEvent
+/// Instruction 12 — AddMarketToEvent
 ///
 /// Links an existing market to an event. Sets market.event = event_pubkey
 /// and appends the market into event.markets[].

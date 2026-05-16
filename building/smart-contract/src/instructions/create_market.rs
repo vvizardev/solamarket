@@ -1,4 +1,4 @@
-/// Instruction 0 — CreateMarket
+/// Instruction 2 — CreateMarket
 ///
 /// Creates the Market PDA and the USDC vault ATA owned by the vault_authority PDA.
 ///
