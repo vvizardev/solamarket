@@ -9,7 +9,7 @@
 There is no dedicated WebSocket endpoint for this project (unlike Polymarket's managed WebSocket stream). Instead, `OrderSubscriber` uses **Solana's native account-change WebSocket** to receive notifications whenever any `Order` account in a market is created, updated, or closed.
 
 ```typescript
-import { OrderSubscriber } from "@polymarket-sol/sdk";
+import { OrderSubscriber } from "@solamarket/sdk";
 
 const subscriber = new OrderSubscriber(connection, marketPubkey, PROGRAM_ID);
 await subscriber.subscribe();

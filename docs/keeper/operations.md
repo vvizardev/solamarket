@@ -107,7 +107,7 @@ export WS_ENDPOINT="wss://devnet.helius-rpc.com/?api-key=YOUR_KEY"
 ### Checking keeper position balance
 
 ```typescript
-import { fetchUserPosition, findUserPositionPda } from "@polymarket-sol/sdk";
+import { fetchUserPosition, findUserPositionPda } from "@solamarket/sdk";
 
 const [keeperPosPda] = findUserPositionPda(marketPda, keeper.publicKey, PROGRAM_ID);
 const pos = await fetchUserPosition(connection, keeperPosPda);

@@ -69,7 +69,7 @@ Orders at the same price are sorted by `created_at` (FIFO).
 ### SDK DLOB classes
 
 ```typescript
-import { DLOB, OrderSubscriber } from "@polymarket-sol/sdk";
+import { DLOB, OrderSubscriber } from "@solamarket/sdk";
 
 const subscriber = new OrderSubscriber(connection, marketPubkey, PROGRAM_ID);
 await subscriber.subscribe();

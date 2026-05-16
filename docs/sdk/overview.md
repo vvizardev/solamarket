@@ -6,14 +6,14 @@
 
 ## Package
 
-The SDK is a workspace package located at `sdk/` and published internally as `@polymarket-sol/sdk`.
+The SDK is a workspace package located at `sdk/` and published internally as `@solamarket/sdk`.
 
 ```bash
 # From project root (pnpm workspace)
 pnpm install
 
 # Import in your TypeScript code
-import { splitInstruction, findMarketPda } from "@polymarket-sol/sdk";
+import { splitInstruction, findMarketPda } from "@solamarket/sdk";
 ```
 
 ---
@@ -58,7 +58,7 @@ The SDK is not published to npm. Install it as a pnpm workspace dependency:
 // your package.json
 {
   "dependencies": {
-    "@polymarket-sol/sdk": "workspace:*"
+    "@solamarket/sdk": "workspace:*"
   }
 }
 ```

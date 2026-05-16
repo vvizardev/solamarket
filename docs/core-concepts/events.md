@@ -92,7 +92,7 @@ This enables efficient off-chain querying: a `getProgramAccounts` `memcmp` filte
 
 ```typescript
 import { createHash } from "crypto";
-import { createEvent, findEventPda } from "@polymarket-sol/sdk";
+import { createEvent, findEventPda } from "@solamarket/sdk";
 
 const label = "2024 US Presidential Election";
 const eventId = new Uint8Array(createHash("sha256").update(label).digest());
@@ -116,7 +116,7 @@ Wire **`primary_category`** and **`subcategory`** in the `CreateEvent` instructi
 Each market is created independently with `CreateMarket`. The `end_time` passed to each market should match the event's `end_time`.
 
 ```typescript
-import { createMarket, findMarketPda } from "@polymarket-sol/sdk";
+import { createMarket, findMarketPda } from "@solamarket/sdk";
 import { createHash } from "crypto";
 
 const questions = [
@@ -139,7 +139,7 @@ Each **`CreateMarket`** call should use **matching** `primary_category` / `subca
 Call `AddMarketToEvent` once per market. This sets `market.event = eventPda` and appends the market pubkey to `event.markets[]`.
 
 ```typescript
-import { addMarketToEvent } from "@polymarket-sol/sdk";
+import { addMarketToEvent } from "@solamarket/sdk";
 
 for (const { pda: marketPda } of marketPdas) {
   const ix = addMarketToEvent({
@@ -165,7 +165,7 @@ Resolve each market independently using `ResolveMarket` as usual. The event itse
 Use `ResolveEvent` (instruction 11) to resolve the entire event atomically in a single transaction:
 
 ```typescript
-import { resolveEvent } from "@polymarket-sol/sdk";
+import { resolveEvent } from "@solamarket/sdk";
 
 // winningIndex = index into event.markets[] that should resolve YES
 const ix = resolveEvent({
@@ -192,7 +192,7 @@ All N markets resolve in one transaction — no risk of partial resolution.
 
 ```typescript
 import { createHash } from "crypto";
-import { findEventPda, fetchEvent } from "@polymarket-sol/sdk";
+import { findEventPda, fetchEvent } from "@solamarket/sdk";
 
 const label   = "2024 US Presidential Election";
 const eventId = new Uint8Array(createHash("sha256").update(label).digest());

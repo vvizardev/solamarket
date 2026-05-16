@@ -9,7 +9,7 @@
 `Split(amount)` is the entry point for all trading. You deposit USDC into the market vault and receive equal amounts of YES and NO internal balance.
 
 ```typescript
-import { splitInstruction } from "@polymarket-sol/sdk";
+import { splitInstruction } from "@solamarket/sdk";
 
 const ix = splitInstruction(
   user.publicKey,
@@ -37,7 +37,7 @@ You can now sell YES shares (place an ask order) or buy additional YES (place a 
 `Merge(amount)` is the reverse of Split. It burns equal YES and NO balances and returns the collateral:
 
 ```typescript
-import { mergeInstruction } from "@polymarket-sol/sdk";
+import { mergeInstruction } from "@solamarket/sdk";
 
 const ix = mergeInstruction(
   user.publicKey,
@@ -65,7 +65,7 @@ After `Merge(50 USDC)`:
 After a market resolves, the winning side can redeem at 1:1:
 
 ```typescript
-import { redeemInstruction } from "@polymarket-sol/sdk";
+import { redeemInstruction } from "@solamarket/sdk";
 
 // Check the resolved outcome first
 const market = await fetchMarket(connection, marketPda);
@@ -94,7 +94,7 @@ const ix = redeemInstruction(
 By default, YES and NO balances are internal numbers in `UserPosition`. To use them in external DeFi (LP pools, lending protocols, bridges), call `TokenizePosition` to mint real SPL tokens.
 
 ```typescript
-import { tokenizePositionInstruction } from "@polymarket-sol/sdk";
+import { tokenizePositionInstruction } from "@solamarket/sdk";
 
 const ix = tokenizePositionInstruction(
   user.publicKey,

@@ -92,7 +92,7 @@ interface Market {
 Deserialize:
 
 ```typescript
-import { fetchMarket, deserializeMarket } from "@polymarket-sol/sdk";
+import { fetchMarket, deserializeMarket } from "@solamarket/sdk";
 
 // Fetches from RPC and deserializes
 const market = await fetchMarket(connection, marketPda);
@@ -188,7 +188,7 @@ interface UserPosition {
 Fetch:
 
 ```typescript
-import { fetchUserPosition, findUserPositionPda } from "@polymarket-sol/sdk";
+import { fetchUserPosition, findUserPositionPda } from "@solamarket/sdk";
 
 const [posPda] = findUserPositionPda(marketPda, userPubkey, PROGRAM_ID);
 const position = await fetchUserPosition(connection, posPda);
@@ -243,7 +243,7 @@ interface Event {
 Fetch:
 
 ```typescript
-import { fetchEvent, findEventPda } from "@polymarket-sol/sdk";
+import { fetchEvent, findEventPda } from "@solamarket/sdk";
 import { createHash } from "crypto";
 
 const eventId = new Uint8Array(createHash("sha256").update("2024 US Presidential Election").digest());

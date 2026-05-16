@@ -53,7 +53,7 @@ A **complete set** is a set of exactly one YES share from every market in an exc
 Deposit `N × amount` USDC (where N = number of markets in the event) and receive `amount` YES shares in each market:
 
 ```typescript
-import { splitCompleteSet } from "@polymarket-sol/sdk";
+import { splitCompleteSet } from "@solamarket/sdk";
 
 // Exclusive event with 3 markets (e.g. Trump / Biden / Other)
 const ix = splitCompleteSet({
@@ -73,7 +73,7 @@ After this call, the user's `UserPosition` in each market has `yes_balance` incr
 The inverse: return `amount` YES shares from every market in the event and receive `N × amount` USDC back:
 
 ```typescript
-import { mergeCompleteSet } from "@polymarket-sol/sdk";
+import { mergeCompleteSet } from "@solamarket/sdk";
 
 const ix = mergeCompleteSet({
   eventPda,
@@ -253,7 +253,7 @@ import {
   findMarketPda,
   findUserPositionPda,
   fetchEvent,
-} from "@polymarket-sol/sdk";
+} from "@solamarket/sdk";
 
 // Fetch event to get all market PDAs
 const event = await fetchEvent(connection, eventPda);

@@ -128,7 +128,7 @@ redeemInstruction(
 ### Fetch a single order
 
 ```typescript
-import { fetchOrder } from "@polymarket-sol/sdk";
+import { fetchOrder } from "@solamarket/sdk";
 
 const order = await fetchOrder(connection, orderPda);
 console.log("Side:",    order.side === 0 ? "bid" : "ask");
@@ -143,7 +143,7 @@ console.log("Remaining:", Number(order.size - order.fillAmount) / 1e6, "USDC");
 Uses `getProgramAccounts` with two `memcmp` filters: Order discriminant byte (`1`) and market pubkey at byte offset 1.
 
 ```typescript
-import { fetchOrdersForMarket } from "@polymarket-sol/sdk";
+import { fetchOrdersForMarket } from "@solamarket/sdk";
 
 const orders = await fetchOrdersForMarket(connection, marketPda, PROGRAM_ID);
 
@@ -193,7 +193,7 @@ import {
   findUserPositionPda,
   findMarketPda,
   findVaultAuthorityPda,
-} from "@polymarket-sol/sdk";
+} from "@solamarket/sdk";
 
 const [marketPda]   = findMarketPda(questionHash, PROGRAM_ID);
 const [orderPda]    = findOrderPda(marketPda, user.publicKey, nonce, PROGRAM_ID);

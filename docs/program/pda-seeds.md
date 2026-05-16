@@ -156,7 +156,7 @@ Any client that knows the program ID, market question, and user pubkey can deriv
 import { createHash } from "crypto";
 import {
   findMarketPda, findOrderPda, findUserPositionPda, findVaultAuthorityPda, findEventPda
-} from "@polymarket-sol/sdk";
+} from "@solamarket/sdk";
 
 const question = "Will BTC be above $100k by end of 2025?";
 const hash = new Uint8Array(createHash("sha256").update(question).digest());

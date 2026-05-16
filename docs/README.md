@@ -65,6 +65,12 @@ Get your environment set up and place your first order in minutes.
 | [Account Structs](./program/accounts.md) | Borsh layout for `Market`, `Event`, `Order`, and `UserPosition` |
 | [PDA Seeds](./program/pda-seeds.md) | Seed derivation for all program-owned accounts |
 
+### Market Data
+
+| Page | Description |
+|------|-------------|
+| [Fetching Markets](./market-data/fetching-markets.md) | Four strategies for discovering markets and events on-chain: by question/label, by event, by category, and full scan |
+
 ### Resources
 
 | Page | Description |

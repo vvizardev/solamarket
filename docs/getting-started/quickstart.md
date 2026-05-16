@@ -94,8 +94,8 @@ import {
   findUserPositionPda,
   placeOrderInstruction,
   splitInstruction,
-} from "@polymarket-sol/sdk";
-import { PROGRAM_ID } from "@polymarket-sol/sdk/constants";
+} from "@solamarket/sdk";
+import { PROGRAM_ID } from "@solamarket/sdk/constants";
 
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
@@ -161,7 +161,7 @@ pnpm ts-node scripts/resolve-market.ts
 After resolution, the winning side uses `Redeem` to swap their YES or NO balance back for USDC at 1:1.
 
 ```typescript
-import { redeemInstruction } from "@polymarket-sol/sdk";
+import { redeemInstruction } from "@solamarket/sdk";
 
 const redeemIx = redeemInstruction(
   winner.publicKey, MARKET_PUBKEY, winnerPosPda,

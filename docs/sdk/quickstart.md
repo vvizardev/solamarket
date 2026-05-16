@@ -14,7 +14,7 @@ import {
   findMarketPda,
   findUserPositionPda,
   PROGRAM_ID,
-} from "@polymarket-sol/sdk";
+} from "@solamarket/sdk";
 
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 ```
@@ -27,7 +27,7 @@ If you know the question string, derive the market PDA directly:
 
 ```typescript
 import { createHash } from "crypto";
-import { findMarketPda, fetchMarket } from "@polymarket-sol/sdk";
+import { findMarketPda, fetchMarket } from "@solamarket/sdk";
 
 const question = "Will BTC be above $100k by end of 2025?";
 const hash = new Uint8Array(createHash("sha256").update(question).digest());
@@ -50,7 +50,7 @@ const market = await fetchMarket(connection, new PublicKey("ABC123..."));
 ## Fetch All Orders for a Market
 
 ```typescript
-import { fetchOrdersForMarket } from "@polymarket-sol/sdk";
+import { fetchOrdersForMarket } from "@solamarket/sdk";
 
 const orders = await fetchOrdersForMarket(connection, marketPda, PROGRAM_ID);
 
@@ -71,7 +71,7 @@ import {
   splitInstruction,
   findUserPositionPda,
   findVaultAuthorityPda,
-} from "@polymarket-sol/sdk";
+} from "@solamarket/sdk";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 
@@ -106,8 +106,8 @@ await sendAndConfirmTransaction(connection, tx, [user]);
 import {
   placeOrderInstruction,
   findOrderPda,
-} from "@polymarket-sol/sdk";
-import { OrderSide } from "@polymarket-sol/sdk/types";
+} from "@solamarket/sdk";
+import { OrderSide } from "@solamarket/sdk/types";
 
 const nonce = BigInt(Date.now()); // unique per order
 const [orderPda] = findOrderPda(marketPda, user.publicKey, nonce, PROGRAM_ID);
@@ -137,7 +137,7 @@ console.log("Order PDA:", orderPda.toBase58());
 ## Cancel an Order
 
 ```typescript
-import { cancelOrderInstruction } from "@polymarket-sol/sdk";
+import { cancelOrderInstruction } from "@solamarket/sdk";
 
 const cancelIx = cancelOrderInstruction(
   user.publicKey,
@@ -156,7 +156,7 @@ await sendAndConfirmTransaction(connection, new Transaction().add(cancelIx), [us
 ## Fetch User Position
 
 ```typescript
-import { fetchUserPosition } from "@polymarket-sol/sdk";
+import { fetchUserPosition } from "@solamarket/sdk";
 
 const position = await fetchUserPosition(connection, userPositionPda);
 console.log("YES balance:", Number(position.yesBalance) / 1e6, "USDC");

@@ -100,7 +100,7 @@ const hash = questionHash("Will BTC be above $100k by end of 2025?");
 Derive the Market PDA:
 
 ```typescript
-import { findMarketPda } from "@polymarket-sol/sdk";
+import { findMarketPda } from "@solamarket/sdk";
 
 const [marketPda] = findMarketPda(hash, PROGRAM_ID);
 ```

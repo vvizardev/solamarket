@@ -75,7 +75,7 @@ program/
 
 ```
 sdk/
-├── package.json             ← name: @polymarket-sol/sdk
+├── package.json             ← name: @solamarket/sdk
 ├── tsconfig.json
 └── src/
     ├── index.ts             ← re-exports everything public
