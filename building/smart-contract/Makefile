@@ -1,4 +1,4 @@
-PKG := smart-contract
+PKG := solamarket
 CRATE := $(subst -,_,$(PKG))
 PROJECT_NAME := $(CRATE)
 DEPLOY := ./target/deploy
